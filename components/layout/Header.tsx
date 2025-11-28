@@ -61,9 +61,18 @@ export default function Header({
   return (
     <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 px-4 sm:px-6 py-3 sm:py-4 shadow-sm sticky top-0 z-40">
       <div className="flex items-center justify-between gap-3 sm:gap-4">
-        <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent truncate">
-          Pronoy&apos;s To-Do List
-        </h1>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <img 
+            src="/logo.svg" 
+            alt="Logo" 
+            className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0"
+            width="40"
+            height="40"
+          />
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent truncate">
+            Pronoy&apos;s To-Do List
+          </h1>
+        </div>
         
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-2 lg:gap-4">

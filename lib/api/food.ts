@@ -1,4 +1,5 @@
 import type { Macros } from '../types';
+import { ENV } from '../env';
 
 export interface FoodSearchResult {
   name: string;
@@ -48,7 +49,7 @@ async function searchCalorieNinjas(query: string): Promise<FoodSearchResult[]> {
   // CalorieNinjas API endpoint
   // You can get a free API key from https://calorieninjas.com/
   // For now, this will likely fail without an API key, but serves as a fallback
-  const apiKey = process.env.NEXT_PUBLIC_CALORIE_NINJAS_API_KEY || '';
+  const apiKey = ENV.NEXT_PUBLIC_CALORIE_NINJAS_API_KEY || '';
   const url = `https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(query)}`;
   
   try {

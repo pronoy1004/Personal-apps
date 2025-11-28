@@ -8,9 +8,11 @@ const USER_ID = 'default-user';
 // GET - Fetch kanban data
 export async function GET(request: NextRequest) {
   try {
+    console.log('[KANBAN API] GET request received');
     const dbConnection = await connectDB();
     if (!dbConnection) {
-      // MongoDB not configured, return empty structure
+      // MongoDB not configured or connection failed, return empty structure
+      console.warn('[KANBAN API] MongoDB not available - returning empty data. Check MONGODB_URI environment variable and connection.');
       return NextResponse.json({
         tasks: [],
         columns: [],
@@ -24,10 +26,12 @@ export async function GET(request: NextRequest) {
       });
     }
     
+    console.log('[KANBAN API] Querying database for userId:', USER_ID);
     let kanbanData = await KanbanDataModel.findOne({ userId: USER_ID });
 
     if (!kanbanData) {
       // Return empty structure if no data exists
+      console.log('[KANBAN API] No data found in database for userId:', USER_ID);
       return NextResponse.json({
         tasks: [],
         columns: [],
@@ -53,6 +57,11 @@ export async function GET(request: NextRequest) {
       },
       lastModified: kanbanData.lastModified?.toISOString() || new Date().toISOString(),
     };
+
+    console.log('[KANBAN API] Returning data:', {
+      tasks: data.tasks.length,
+      columns: data.columns.length,
+    });
 
     return NextResponse.json(data);
   } catch (error) {

@@ -8,9 +8,11 @@ const USER_ID = 'default-user';
 // GET - Fetch fitness data
 export async function GET(request: NextRequest) {
   try {
+    console.log('[FITNESS API] GET request received');
     const dbConnection = await connectDB();
     if (!dbConnection) {
-      // MongoDB not configured, return default structure
+      // MongoDB not configured or connection failed, return default structure
+      console.warn('[FITNESS API] MongoDB not available - returning empty data. Check MONGODB_URI environment variable and connection.');
       return NextResponse.json({
         weightEntries: [],
         foodEntries: [],
@@ -35,10 +37,12 @@ export async function GET(request: NextRequest) {
       });
     }
     
+    console.log('[FITNESS API] Querying database for userId:', USER_ID);
     let fitnessData = await FitnessDataModel.findOne({ userId: USER_ID });
 
     if (!fitnessData) {
       // Return default structure if no data exists
+      console.log('[FITNESS API] No data found in database for userId:', USER_ID);
       return NextResponse.json({
         weightEntries: [],
         foodEntries: [],
@@ -78,6 +82,13 @@ export async function GET(request: NextRequest) {
       settings: fitnessData.settings || {},
       lastModified: fitnessData.lastModified?.toISOString() || new Date().toISOString(),
     };
+
+    console.log('[FITNESS API] Returning data:', {
+      weightEntries: data.weightEntries.length,
+      foodEntries: data.foodEntries.length,
+      workoutEntries: data.workoutEntries.length,
+      favoriteFoods: data.favoriteFoods.length,
+    });
 
     return NextResponse.json(data);
   } catch (error) {

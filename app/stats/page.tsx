@@ -15,6 +15,13 @@ export default function StatsPage() {
           >
             <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
           </Link>
+          <img 
+            src="/logo.svg" 
+            alt="Logo" 
+            className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0"
+            width="40"
+            height="40"
+          />
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Statistics</h1>
         </div>
 

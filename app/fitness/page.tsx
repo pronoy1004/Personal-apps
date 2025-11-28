@@ -20,6 +20,13 @@ export default function FitnessPage() {
               >
                 <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
               </Link>
+              <img 
+                src="/logo.svg" 
+                alt="Logo" 
+                className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0"
+                width="40"
+                height="40"
+              />
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent truncate">
                 Fitness & Nutrition
               </h1>

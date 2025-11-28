@@ -6,7 +6,8 @@
     "dev": "next dev -p 6767",
     "build": "next build",
     "start": "next start -p 6767",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate-icons": "node scripts/generate-icons-sharp.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
@@ -29,6 +30,7 @@
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.2.0",
     "postcss": "^8.4.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.0"
   }
