@@ -89,7 +89,7 @@ export default function DailySummary() {
   const fatProgress = fatGoal > 0 ? (totalMacros.fat / fatGoal) * 100 : 0;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 lg:sticky lg:top-4">
       <div className="flex items-center gap-3 mb-6">
         <Target className="text-blue-500" size={24} />
         <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Daily Summary</h2>

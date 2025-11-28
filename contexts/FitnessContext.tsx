@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { loadFitnessData, saveFitnessData } from '@/lib/storage';
+import { loadFitnessData, loadFitnessDataAsync, saveFitnessData } from '@/lib/storage';
 import type { FitnessData, WeightEntry, FoodEntry, WorkoutEntry, UserProfile, FavoriteFood, MealType } from '@/lib/types';
 import { generateId } from '@/lib/utils';
 import { calculateTDEE } from '@/lib/utils/tdee';
@@ -35,9 +35,18 @@ export function FitnessProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fitnessData = loadFitnessData();
-    setData(fitnessData);
-    setLoading(false);
+    // Try async load first (with API sync), fallback to sync localStorage
+    loadFitnessDataAsync()
+      .then((fitnessData) => {
+        setData(fitnessData);
+        setLoading(false);
+      })
+      .catch(() => {
+        // Fallback to localStorage on error
+        const fitnessData = loadFitnessData();
+        setData(fitnessData);
+        setLoading(false);
+      });
   }, []);
 
   const updateData = useCallback((updater: (data: FitnessData) => FitnessData) => {

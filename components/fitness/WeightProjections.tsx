@@ -13,7 +13,7 @@ export default function WeightProjections() {
   if (!data) return null;
 
   const currentWeight = getCurrentWeight() || 102;
-  
+
   // Calculate formula-based TDEE
   const formulaTDEE = calculateTDEE(
     currentWeight,

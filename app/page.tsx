@@ -8,6 +8,8 @@ import KanbanBoard from '@/components/kanban/KanbanBoard';
 import TaskModal from '@/components/tasks/TaskModal';
 import Header from '@/components/layout/Header';
 import CommandPalette from '@/components/ui/CommandPalette';
+import OnlineStatus from '@/components/ui/OnlineStatus';
+import SyncStatus from '@/components/ui/SyncStatus';
 import { Activity } from 'lucide-react';
 
 export default function Home() {
@@ -125,6 +127,12 @@ export default function Home() {
         onNewTask={handleNewTask}
         onNewTemplate={handleNewTemplate}
       />
+
+      {/* Online Status Indicator */}
+      <OnlineStatus />
+      
+      {/* Sync Status */}
+      <SyncStatus />
     </main>
   );
 }

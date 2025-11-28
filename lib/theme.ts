@@ -1,4 +1,5 @@
 export function getInitialTheme(): 'light' | 'dark' {
+
   if (typeof window === 'undefined') return 'light';
   
   try {

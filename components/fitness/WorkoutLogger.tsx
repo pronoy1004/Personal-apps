@@ -244,7 +244,7 @@ export default function WorkoutLogger() {
       {todayWorkouts.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Today's Workouts</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Today&apos;s Workouts</h3>
             <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
               Total: {totalCalories} cal
             </div>

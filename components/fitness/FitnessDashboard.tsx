@@ -21,7 +21,13 @@ export default function FitnessDashboard() {
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+        delay: 100,
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor)
   );
 
@@ -111,8 +117,8 @@ export default function FitnessDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-200 dark:border-gray-800">
+      {/* Tabs - Desktop */}
+      <div className="hidden md:flex gap-2 border-b border-gray-200 dark:border-gray-800">
         <button
           onClick={() => setActiveTab('today')}
           className={`px-4 py-2 font-medium transition-colors border-b-2 ${
@@ -167,8 +173,58 @@ export default function FitnessDashboard() {
         </button>
       </div>
 
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg z-30 safe-area-inset-bottom">
+        <div className="grid grid-cols-4 gap-1">
+          <button
+            onClick={() => setActiveTab('today')}
+            className={`flex flex-col items-center justify-center py-3 px-2 min-h-[60px] transition-colors ${
+              activeTab === 'today'
+                ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                : 'text-gray-600 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-800'
+            }`}
+          >
+            <Calendar size={20} />
+            <span className="text-xs mt-1 font-medium">Today</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`flex flex-col items-center justify-center py-3 px-2 min-h-[60px] transition-colors ${
+              activeTab === 'history'
+                ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                : 'text-gray-600 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-800'
+            }`}
+          >
+            <TrendingUp size={20} />
+            <span className="text-xs mt-1 font-medium">History</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('projections')}
+            className={`flex flex-col items-center justify-center py-3 px-2 min-h-[60px] transition-colors ${
+              activeTab === 'projections'
+                ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                : 'text-gray-600 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-800'
+            }`}
+          >
+            <Activity size={20} />
+            <span className="text-xs mt-1 font-medium">Projections</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`flex flex-col items-center justify-center py-3 px-2 min-h-[60px] transition-colors ${
+              activeTab === 'settings'
+                ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                : 'text-gray-600 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-800'
+            }`}
+          >
+            <Settings size={20} />
+            <span className="text-xs mt-1 font-medium">Settings</span>
+          </button>
+        </div>
+      </div>
+
       {/* Tab Content */}
-      <div className="mt-6">
+      <div className="mt-4 md:mt-6 pb-20 md:pb-6">
         {activeTab === 'today' && (
           <DndContext
             sensors={sensors}
@@ -176,14 +232,14 @@ export default function FitnessDashboard() {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
+            <div className="space-y-4 md:space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+                <div className="lg:col-span-2 space-y-4 md:space-y-6">
                   <WeightTracker />
                   <FoodLogger activeDragId={activeDragId} />
                   <WorkoutLogger />
                 </div>
-                <div>
+                <div className="lg:sticky lg:top-24 lg:self-start">
                   <DailySummary />
                 </div>
               </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Task, Column, Priority } from '@/lib/types';
-import { loadKanbanData, saveKanbanData } from '@/lib/storage';
+import { loadKanbanData, loadKanbanDataAsync, saveKanbanData } from '@/lib/storage';
 import { generateId, createActivityEntry } from '@/lib/utils';
 import type { KanbanData } from '@/lib/types';
 import { TaskTemplate } from '@/lib/templates';
@@ -12,9 +12,18 @@ export function useKanban() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loaded = loadKanbanData();
-    setData(loaded);
-    setIsLoading(false);
+    // Try async load first (with API sync), fallback to sync localStorage
+    loadKanbanDataAsync()
+      .then((loaded) => {
+        setData(loaded);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        // Fallback to localStorage on error
+        const loaded = loadKanbanData();
+        setData(loaded);
+        setIsLoading(false);
+      });
   }, []);
 
   const updateData = useCallback((updater: (prev: KanbanData) => KanbanData) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { searchFood } from '@/lib/api/food';
 import type { FoodSearchResult } from '@/lib/api/food';
 import { Search, Loader2, AlertCircle } from 'lucide-react';
@@ -15,11 +15,11 @@ export default function FoodSearch({ onSelect, onClose }: FoodSearchProps) {
   const [results, setResults] = useState<FoodSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
 
     if (query.trim().length < 2) {
@@ -45,11 +45,11 @@ export default function FoodSearch({ onSelect, onClose }: FoodSearchProps) {
       }
     }, 500);
 
-    setDebounceTimer(timer);
+    debounceTimerRef.current = timer;
 
     return () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
     };
   }, [query]);

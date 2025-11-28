@@ -33,7 +33,9 @@ export default function KanbanBoard({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
+        distance: 8,
+        delay: 100,
+        tolerance: 5,
       },
     })
   );
