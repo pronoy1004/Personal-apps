@@ -40,21 +40,16 @@ export async function searchFood(query: string, options?: SearchFoodOptions): Pr
   const page = options?.page || 1;
   const pageSize = options?.pageSize || 20;
 
-  const promises: Promise<FoodSearchResult[]>[] = [];
-
-  promises.push(searchOpenFoodFacts(query, page, pageSize).catch(() => []));
-  promises.push(searchUSDAFoodData(query, page, pageSize).catch(() => []));
-  promises.push(searchCalorieNinjas(query).catch(() => []));
-
-  const results = await Promise.allSettled(promises);
-  
   const allResults: FoodSearchResult[] = [];
   
-  results.forEach((result) => {
-    if (result.status === 'fulfilled' && result.value) {
-      allResults.push(...result.value);
-    }
-  });
+  const usdaResults = await searchUSDAFoodData(query, page, pageSize).catch(() => []);
+  allResults.push(...usdaResults);
+  
+  const calorieNinjasResults = await searchCalorieNinjas(query).catch(() => []);
+  allResults.push(...calorieNinjasResults);
+  
+  const openFoodFactsResults = await searchOpenFoodFacts(query, page, pageSize).catch(() => []);
+  allResults.push(...openFoodFactsResults);
 
   return deduplicateAndRankResults(allResults, query).slice(0, pageSize * 2);
 }
@@ -63,6 +58,12 @@ function deduplicateAndRankResults(results: FoodSearchResult[], query: string): 
   const queryLower = query.toLowerCase();
   const seen = new Map<string, FoodSearchResult>();
   
+  const sourcePriority: Record<string, number> = {
+    'USDA': 3,
+    'CalorieNinjas': 2,
+    'Open Food Facts': 1,
+  };
+  
   results.forEach((item) => {
     const key = item.name.toLowerCase().trim();
     const existing = seen.get(key);
@@ -70,8 +71,17 @@ function deduplicateAndRankResults(results: FoodSearchResult[], query: string): 
     if (!existing) {
       seen.set(key, item);
     } else {
-      if (calculateMatchScore(item.name, query) > calculateMatchScore(existing.name, query)) {
+      const itemSourcePriority = sourcePriority[item.source || ''] || 0;
+      const existingSourcePriority = sourcePriority[existing.source || ''] || 0;
+      
+      if (itemSourcePriority > existingSourcePriority) {
         seen.set(key, item);
+      } else if (itemSourcePriority === existingSourcePriority) {
+        const itemScore = calculateMatchScore(item.name, query);
+        const existingScore = calculateMatchScore(existing.name, query);
+        if (itemScore > existingScore) {
+          seen.set(key, item);
+        }
       }
     }
   });
@@ -80,6 +90,12 @@ function deduplicateAndRankResults(results: FoodSearchResult[], query: string): 
     .sort((a, b) => {
       const scoreA = calculateMatchScore(a.name, query);
       const scoreB = calculateMatchScore(b.name, query);
+      const sourcePriorityA = sourcePriority[a.source || ''] || 0;
+      const sourcePriorityB = sourcePriority[b.source || ''] || 0;
+      
+      if (scoreA === scoreB) {
+        return sourcePriorityB - sourcePriorityA;
+      }
       return scoreB - scoreA;
     });
 }
