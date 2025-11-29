@@ -14,6 +14,7 @@ interface EnvConfig {
   };
   api: {
     calorieNinjasKey: string | undefined;
+    usdaKey: string | undefined;
   };
 }
 
@@ -42,6 +43,14 @@ export function getCalorieNinjasApiKey(): string | undefined {
 }
 
 /**
+ * Get USDA FoodData Central API key (free, get at https://api.data.gov/signup/)
+ * @returns API key or undefined
+ */
+export function getUSDAApiKey(): string | undefined {
+  return process.env.NEXT_PUBLIC_USDA_API_KEY;
+}
+
+/**
  * Get all environment configuration
  * @returns Environment configuration object
  */
@@ -55,6 +64,7 @@ export function getEnvConfig(): EnvConfig {
     },
     api: {
       calorieNinjasKey: getCalorieNinjasApiKey(),
+      usdaKey: getUSDAApiKey(),
     },
   };
 }
@@ -66,7 +76,10 @@ export function getEnvConfig(): EnvConfig {
 export const ENV = {
   MONGODB_URI: process.env.MONGODB_URI,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  CALORIE_NINJAS_API_KEY: process.env.CALORIE_NINJAS_API_KEY || process.env.NEXT_PUBLIC_CALORIE_NINJAS_API_KEY,
+  USDA_API_KEY: process.env.USDA_API_KEY || process.env.NEXT_PUBLIC_USDA_API_KEY,
   NEXT_PUBLIC_CALORIE_NINJAS_API_KEY: process.env.NEXT_PUBLIC_CALORIE_NINJAS_API_KEY,
+  NEXT_PUBLIC_USDA_API_KEY: process.env.NEXT_PUBLIC_USDA_API_KEY,
 } as const;
 
 /**
