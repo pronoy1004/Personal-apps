@@ -5,14 +5,10 @@ import type { KanbanData } from '@/lib/types';
 
 const USER_ID = 'default-user';
 
-// GET - Fetch kanban data
 export async function GET(request: NextRequest) {
   try {
-    console.log('[KANBAN API] GET request received');
     const dbConnection = await connectDB();
     if (!dbConnection) {
-      // MongoDB not configured or connection failed, return empty structure
-      console.warn('[KANBAN API] MongoDB not available - returning empty data. Check MONGODB_URI environment variable and connection.');
       return NextResponse.json({
         tasks: [],
         columns: [],
@@ -26,12 +22,9 @@ export async function GET(request: NextRequest) {
       });
     }
     
-    console.log('[KANBAN API] Querying database for userId:', USER_ID);
     let kanbanData = await KanbanDataModel.findOne({ userId: USER_ID });
 
     if (!kanbanData) {
-      // Return empty structure if no data exists
-      console.log('[KANBAN API] No data found in database for userId:', USER_ID);
       return NextResponse.json({
         tasks: [],
         columns: [],
@@ -45,7 +38,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Convert to plain object and format for client
     const data = {
       tasks: kanbanData.tasks || [],
       columns: kanbanData.columns || [],
@@ -58,11 +50,6 @@ export async function GET(request: NextRequest) {
       lastModified: kanbanData.lastModified?.toISOString() || new Date().toISOString(),
     };
 
-    console.log('[KANBAN API] Returning data:', {
-      tasks: data.tasks.length,
-      columns: data.columns.length,
-    });
-
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching kanban data:', error);
@@ -73,12 +60,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST/PUT - Save kanban data
 export async function POST(request: NextRequest) {
   try {
     const dbConnection = await connectDB();
     if (!dbConnection) {
-      // MongoDB not configured, return success (data will be saved in localStorage)
       return NextResponse.json({
         success: true,
         lastModified: new Date().toISOString(),
@@ -118,7 +103,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT - Update kanban data (same as POST)
 export async function PUT(request: NextRequest) {
   return POST(request);
 }

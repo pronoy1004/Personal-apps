@@ -53,22 +53,18 @@ export function useSync(
   }, [kanbanLastModified, fitnessLastModified, onKanbanUpdate, onFitnessUpdate, isSyncing]);
 
   useEffect(() => {
-    // Initial sync
     performSync();
 
-    // Set up interval sync
     syncIntervalRef.current = setInterval(() => {
       performSync();
     }, SYNC_INTERVAL);
 
-    // Sync on window focus
     if (SYNC_ON_FOCUS) {
       const handleFocus = () => {
         performSync();
       };
       window.addEventListener('focus', handleFocus);
 
-      // Sync on visibility change
       if (SYNC_ON_VISIBILITY_CHANGE) {
         const handleVisibilityChange = () => {
           if (document.visibilityState === 'visible') {

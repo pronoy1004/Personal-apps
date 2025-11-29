@@ -5,12 +5,10 @@ import FitnessDataModel from '@/lib/models/FitnessData';
 
 const USER_ID = 'default-user';
 
-// POST - Sync data based on lastModified timestamp
 export async function POST(request: NextRequest) {
   try {
     const dbConnection = await connectDB();
     if (!dbConnection) {
-      // MongoDB not configured, return no updates needed
       return NextResponse.json({});
     }
     
@@ -22,7 +20,6 @@ export async function POST(request: NextRequest) {
       fitness?: { lastModified: string; needsUpdate: boolean };
     } = {};
 
-    // Check kanban data
     if (kanbanLastModified !== undefined) {
       const kanbanData = await KanbanDataModel.findOne({ userId: USER_ID });
       const serverLastModified = kanbanData?.lastModified?.toISOString();
@@ -36,7 +33,6 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    // Check fitness data
     if (fitnessLastModified !== undefined) {
       const fitnessData = await FitnessDataModel.findOne({ userId: USER_ID });
       const serverLastModified = fitnessData?.lastModified?.toISOString();

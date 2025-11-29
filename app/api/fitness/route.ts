@@ -5,14 +5,10 @@ import type { FitnessData } from '@/lib/types';
 
 const USER_ID = 'default-user';
 
-// GET - Fetch fitness data
 export async function GET(request: NextRequest) {
   try {
-    console.log('[FITNESS API] GET request received');
     const dbConnection = await connectDB();
     if (!dbConnection) {
-      // MongoDB not configured or connection failed, return default structure
-      console.warn('[FITNESS API] MongoDB not available - returning empty data. Check MONGODB_URI environment variable and connection.');
       return NextResponse.json({
         weightEntries: [],
         foodEntries: [],
@@ -37,12 +33,9 @@ export async function GET(request: NextRequest) {
       });
     }
     
-    console.log('[FITNESS API] Querying database for userId:', USER_ID);
     let fitnessData = await FitnessDataModel.findOne({ userId: USER_ID });
 
     if (!fitnessData) {
-      // Return default structure if no data exists
-      console.log('[FITNESS API] No data found in database for userId:', USER_ID);
       return NextResponse.json({
         weightEntries: [],
         foodEntries: [],
@@ -67,7 +60,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Convert to plain object and format for client
     const data = {
       weightEntries: fitnessData.weightEntries || [],
       foodEntries: fitnessData.foodEntries || [],
@@ -83,13 +75,6 @@ export async function GET(request: NextRequest) {
       lastModified: fitnessData.lastModified?.toISOString() || new Date().toISOString(),
     };
 
-    console.log('[FITNESS API] Returning data:', {
-      weightEntries: data.weightEntries.length,
-      foodEntries: data.foodEntries.length,
-      workoutEntries: data.workoutEntries.length,
-      favoriteFoods: data.favoriteFoods.length,
-    });
-
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching fitness data:', error);
@@ -100,12 +85,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST/PUT - Save fitness data
 export async function POST(request: NextRequest) {
   try {
     const dbConnection = await connectDB();
     if (!dbConnection) {
-      // MongoDB not configured, return success (data will be saved in localStorage)
       return NextResponse.json({
         success: true,
         lastModified: new Date().toISOString(),
@@ -148,7 +131,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT - Update fitness data (same as POST)
 export async function PUT(request: NextRequest) {
   return POST(request);
 }

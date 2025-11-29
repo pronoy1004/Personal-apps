@@ -7,12 +7,10 @@ const STORAGE_KEY = 'kanban-data';
 const FITNESS_STORAGE_KEY = 'fitness-data';
 const LAST_SYNC_KEY = 'last-sync';
 
-// Check if online
 function isOnline(): boolean {
   return typeof window !== 'undefined' && navigator.onLine;
 }
 
-// LocalStorage fallback functions
 function getLocalStorage(key: string): string | null {
   if (typeof window === 'undefined') return null;
   try {
@@ -31,7 +29,6 @@ function setLocalStorage(key: string, value: string): void {
   }
 }
 
-// Sync to API in background (non-blocking)
 async function syncToAPI(key: 'kanban' | 'fitness', data: KanbanData | FitnessData): Promise<string | null> {
   if (!isOnline()) return null;
   
@@ -57,7 +54,6 @@ async function syncToAPI(key: 'kanban' | 'fitness', data: KanbanData | FitnessDa
   }
 }
 
-// Get last modified timestamp for sync checking
 export function getLastSyncInfo(key: 'kanban' | 'fitness'): { lastSync: string | null; lastModified: string | null } {
   const syncKey = key === 'kanban' ? `${LAST_SYNC_KEY}-kanban` : `${LAST_SYNC_KEY}-fitness`;
   const modifiedKey = `${syncKey}-lastModified`;
@@ -68,7 +64,6 @@ export function getLastSyncInfo(key: 'kanban' | 'fitness'): { lastSync: string |
   };
 }
 
-// Kanban Data Storage - Sync versions for backward compatibility
 export function loadKanbanData(): KanbanData {
   const stored = getLocalStorage(STORAGE_KEY);
   if (!stored) {
@@ -82,12 +77,10 @@ export function loadKanbanData(): KanbanData {
   try {
     const data = JSON.parse(stored);
     
-    // Ensure columns exist
     if (!data.columns || data.columns.length === 0) {
       data.columns = DEFAULT_COLUMNS;
     }
     
-    // Ensure settings exist
     if (!data.settings) {
       data.settings = DEFAULT_SETTINGS;
     }
@@ -103,14 +96,38 @@ export function loadKanbanData(): KanbanData {
   }
 }
 
-// Async version for initial load - loads from localStorage only (sync happens on save)
 export async function loadKanbanDataAsync(): Promise<KanbanData> {
-  // Just load from localStorage - sync to API happens when data is saved
-  return loadKanbanData();
+  if (!isOnline()) {
+    return loadKanbanData();
+  }
+
+  try {
+    const dbData = await kanbanAPI.fetchKanbanData();
+    const kanbanData: KanbanData = {
+      tasks: dbData.tasks || [],
+      columns: dbData.columns || DEFAULT_COLUMNS,
+      settings: dbData.settings || DEFAULT_SETTINGS,
+    };
+
+    if (!kanbanData.columns || kanbanData.columns.length === 0) {
+      kanbanData.columns = DEFAULT_COLUMNS;
+    }
+    if (!kanbanData.settings) {
+      kanbanData.settings = DEFAULT_SETTINGS;
+    }
+
+    setLocalStorage(STORAGE_KEY, JSON.stringify(kanbanData));
+    if (dbData.lastModified) {
+      setLocalStorage(`${LAST_SYNC_KEY}-kanban-lastModified`, dbData.lastModified);
+    }
+
+    return kanbanData;
+  } catch (error) {
+    return loadKanbanData();
+  }
 }
 
 export function saveKanbanData(data: KanbanData): void {
-  // Always save to localStorage immediately (synchronous)
   try {
     const dataToSave = JSON.parse(JSON.stringify(data));
     setLocalStorage(STORAGE_KEY, JSON.stringify(dataToSave));
@@ -118,10 +135,7 @@ export function saveKanbanData(data: KanbanData): void {
     console.error('Error saving to localStorage:', error);
   }
 
-  // Sync to API in background (non-blocking)
-  syncToAPI('kanban', data).catch(() => {
-    // Already logged in syncToAPI
-  });
+  syncToAPI('kanban', data).catch(() => {});
 }
 
 export function exportData(data: KanbanData): string {
@@ -138,7 +152,6 @@ export function importData(jsonString: string): KanbanData | null {
   }
 }
 
-// Fitness Data Storage
 const DEFAULT_USER_PROFILE: UserProfile = {
   height: 183,
   age: 27,
@@ -170,21 +183,17 @@ export function loadFitnessData(): FitnessData {
   try {
     const data = JSON.parse(stored) as FitnessData;
     
-    // Ensure userProfile exists with defaults
     if (!data.userProfile) {
       data.userProfile = DEFAULT_USER_PROFILE;
     } else {
       data.userProfile = { ...DEFAULT_USER_PROFILE, ...data.userProfile };
     }
     
-    // Ensure arrays exist
     if (!data.weightEntries) data.weightEntries = [];
     if (!data.foodEntries) data.foodEntries = [];
     if (!data.workoutEntries) data.workoutEntries = [];
     if (!data.favoriteFoods) data.favoriteFoods = [];
     if (!data.settings) data.settings = {};
-
-    // Migration: Convert old isFavorite entries to favoriteFoods
     if (data.foodEntries && data.foodEntries.length > 0) {
       const favoriteEntries = data.foodEntries.filter((entry: any) => entry.isFavorite);
       if (favoriteEntries.length > 0 && data.favoriteFoods.length === 0) {
@@ -226,24 +235,47 @@ export function loadFitnessData(): FitnessData {
   }
 }
 
-// Async version for initial load with API sync
 export async function loadFitnessDataAsync(): Promise<FitnessData> {
-  // Just load from localStorage - sync to API happens when data is saved
-  return loadFitnessData();
+  if (!isOnline()) {
+    return loadFitnessData();
+  }
+
+  try {
+    const dbData = await fitnessAPI.fetchFitnessData();
+    const fitnessData: FitnessData = {
+      weightEntries: dbData.weightEntries || [],
+      foodEntries: dbData.foodEntries || [],
+      workoutEntries: dbData.workoutEntries || [],
+      favoriteFoods: dbData.favoriteFoods || [],
+      userProfile: dbData.userProfile || DEFAULT_USER_PROFILE,
+      settings: dbData.settings || {},
+    };
+
+    if (!fitnessData.userProfile) {
+      fitnessData.userProfile = DEFAULT_USER_PROFILE;
+    } else {
+      fitnessData.userProfile = { ...DEFAULT_USER_PROFILE, ...fitnessData.userProfile };
+    }
+
+    setLocalStorage(FITNESS_STORAGE_KEY, JSON.stringify(fitnessData));
+    if (dbData.lastModified) {
+      setLocalStorage(`${LAST_SYNC_KEY}-fitness-lastModified`, dbData.lastModified);
+    }
+
+    return fitnessData;
+  } catch (error) {
+    return loadFitnessData();
+  }
 }
 
 export function saveFitnessData(data: FitnessData): void {
-  // Always save to localStorage immediately (synchronous)
   try {
     setLocalStorage(FITNESS_STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
     console.error('Error saving to localStorage:', error);
   }
 
-  // Sync to API in background (non-blocking)
-  syncToAPI('fitness', data).catch(() => {
-    // Already logged in syncToAPI
-  });
+  syncToAPI('fitness', data).catch(() => {});
 }
 
 export function exportFitnessData(data: FitnessData): string {
