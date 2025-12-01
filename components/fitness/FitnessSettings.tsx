@@ -56,7 +56,17 @@ export default function FitnessSettings() {
       const currentWeight = data.weightEntries.length > 0
         ? data.weightEntries[data.weightEntries.length - 1].weight
         : undefined;
-      
+
+      const goalConfig: GoalConfig = data.userProfile.goal
+        ? { ...data.userProfile.goal }
+        : {
+            mode: 'maintain',
+            rateKgPerWeek: 0.5,
+            targetWeightKg: currentWeight,
+            targetDate: undefined,
+            preferRate: true,
+          };
+
       setProfile({
         height: data.userProfile.height,
         age: data.userProfile.age,
@@ -64,13 +74,7 @@ export default function FitnessSettings() {
         activityLevel: data.userProfile.activityLevel,
         dailyCalorieGoal: data.userProfile.dailyCalorieGoal || (data.userProfile.baseTDEE || 3400) - 1000,
         defaultWorkoutCalories: data.userProfile.defaultWorkoutCalories || 1100,
-        goal: data.userProfile.goal || {
-          mode: 'maintain' as const,
-          rateKgPerWeek: 0.5,
-          targetWeightKg: currentWeight,
-          targetDate: undefined,
-          preferRate: true,
-        } as GoalConfig,
+        goal: goalConfig,
         macroGoals: data.userProfile.macroGoals || {
           protein: 200,
           carbs: 0,

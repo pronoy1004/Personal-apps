@@ -8,7 +8,7 @@ import ThemeToggle from '@/components/ui/ThemeToggle';
 import ExportImport from '@/components/ui/ExportImport';
 import ColumnManager from '@/components/kanban/ColumnManager';
 import { FilterOptions } from '@/lib/types';
-import { Filter, Archive, BarChart3, Settings, Activity, Menu, X } from 'lucide-react';
+import { Filter, Archive, BarChart3, Settings, Activity, Menu, X, KeyRound } from 'lucide-react';
 
 interface HeaderProps {
   searchValue: string;
@@ -84,6 +84,13 @@ export default function Header({
             title="Fitness & Nutrition"
           >
             <Activity size={20} />
+          </Link>
+          <Link
+            href="/api-keys"
+            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600 rounded-lg transition-colors"
+            title="API Keys Vault"
+          >
+            <KeyRound size={20} />
           </Link>
           <Link
             href="/stats"
@@ -201,6 +208,14 @@ export default function Header({
             >
               <Archive size={20} />
               <span>Archive</span>
+            </Link>
+            <Link
+              href="/api-keys"
+              className="flex items-center gap-2 px-4 py-3 min-h-[44px] bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg transition-colors active:bg-gray-300 dark:active:bg-gray-600"
+              onClick={() => setShowMobileMenu(false)}
+            >
+              <KeyRound size={20} />
+              <span>API Keys</span>
             </Link>
             <button
               data-filter-button

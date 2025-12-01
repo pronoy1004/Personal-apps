@@ -167,3 +167,20 @@ export interface FitnessData {
     defaultMealCalories?: Record<MealType, number>;
   };
 }
+
+export interface ApiKeyEntry {
+  id: string;
+  name: string;
+  service: string;
+  key: string; // encrypted payload
+  expiry?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApiKeysData {
+  passcodeHash?: string;
+  passcodeSalt?: string;
+  keys: ApiKeyEntry[];
+  lastModified: string;
+}

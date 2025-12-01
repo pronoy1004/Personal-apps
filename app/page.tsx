@@ -10,7 +10,7 @@ import Header from '@/components/layout/Header';
 import CommandPalette from '@/components/ui/CommandPalette';
 import OnlineStatus from '@/components/ui/OnlineStatus';
 import SyncStatus from '@/components/ui/SyncStatus';
-import { Activity } from 'lucide-react';
+import { Activity, KeyRound } from 'lucide-react';
 
 export default function Home() {
   const { data } = useKanban();
@@ -94,13 +94,20 @@ export default function Home() {
         />
 
         {/* Quick Navigation */}
-        <div className="px-4 sm:px-6 py-2 border-b border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
+        <div className="px-4 sm:px-6 py-2 border-b border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm flex flex-wrap gap-3">
           <Link
             href="/fitness"
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
             <Activity size={18} />
             Fitness & Nutrition
+          </Link>
+          <Link
+            href="/api-keys"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          >
+            <KeyRound size={18} />
+            API Keys Vault
           </Link>
         </div>
 

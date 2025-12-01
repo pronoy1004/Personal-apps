@@ -1,11 +1,20 @@
 import { DEFAULT_COLUMNS, DEFAULT_SETTINGS } from './constants';
-import type { KanbanData, Task, Column, FitnessData, UserProfile, FavoriteFood, FoodEntry } from './types';
+import type { KanbanData, Task, Column, FitnessData, UserProfile, FavoriteFood, FoodEntry, ApiKeysData } from './types';
 import * as kanbanAPI from './api/kanban';
 import * as fitnessAPI from './api/fitness';
+import * as apiKeysAPI from './api/api-keys';
 
 const STORAGE_KEY = 'kanban-data';
 const FITNESS_STORAGE_KEY = 'fitness-data';
+const API_KEYS_STORAGE_KEY = 'api-keys-data';
 const LAST_SYNC_KEY = 'last-sync';
+const DEFAULT_API_KEYS_DATA: ApiKeysData = {
+  passcodeHash: undefined,
+  passcodeSalt: undefined,
+  keys: [],
+  lastModified: new Date().toISOString(),
+};
+
 
 function isOnline(): boolean {
   return typeof window !== 'undefined' && navigator.onLine;
@@ -276,6 +285,57 @@ export function saveFitnessData(data: FitnessData): void {
   }
 
   syncToAPI('fitness', data).catch(() => {});
+}
+
+export function loadApiKeysData(): ApiKeysData {
+  const stored = getLocalStorage(API_KEYS_STORAGE_KEY);
+  if (!stored) {
+    return { ...DEFAULT_API_KEYS_DATA };
+  }
+
+  try {
+    const parsed = JSON.parse(stored) as ApiKeysData;
+    return {
+      passcodeHash: parsed.passcodeHash,
+      passcodeSalt: parsed.passcodeSalt,
+      keys: parsed.keys || [],
+      lastModified: parsed.lastModified || new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error('Error parsing API keys data:', error);
+    return { ...DEFAULT_API_KEYS_DATA };
+  }
+}
+
+export async function loadApiKeysDataAsync(): Promise<ApiKeysData> {
+  if (!isOnline()) {
+    return loadApiKeysData();
+  }
+
+  try {
+    const dbData = await apiKeysAPI.fetchApiKeysData();
+    const data: ApiKeysData = {
+      passcodeHash: dbData.passcodeHash,
+      passcodeSalt: dbData.passcodeSalt,
+      keys: dbData.keys || [],
+      lastModified: dbData.lastModified || new Date().toISOString(),
+    };
+    setLocalStorage(API_KEYS_STORAGE_KEY, JSON.stringify(data));
+    return data;
+  } catch (error) {
+    console.error('Failed to load API keys data from server:', error);
+    return loadApiKeysData();
+  }
+}
+
+export async function saveApiKeysData(data: ApiKeysData): Promise<void> {
+  try {
+    setLocalStorage(API_KEYS_STORAGE_KEY, JSON.stringify(data));
+    await apiKeysAPI.saveApiKeysData(data);
+  } catch (error) {
+    console.error('Failed to save API keys data:', error);
+    throw error;
+  }
 }
 
 export function exportFitnessData(data: FitnessData): string {
