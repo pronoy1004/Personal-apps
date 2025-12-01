@@ -17,18 +17,31 @@ const ACTIVITY_LEVELS: { value: ActivityLevel; label: string }[] = [
 export default function FitnessSettings() {
   const { data, updateUserProfile } = useFitness();
   const [isSaving, setIsSaving] = useState(false);
-  const [profile, setProfile] = useState({
+  const [profile, setProfile] = useState<{
+    height: number;
+    age: number;
+    gender: Gender;
+    activityLevel: ActivityLevel;
+    dailyCalorieGoal: number;
+    defaultWorkoutCalories: number;
+    goal: GoalConfig;
+    macroGoals: {
+      protein: number;
+      carbs: number;
+      fat: number;
+    };
+  }>({
     height: 183,
     age: 27,
-    gender: 'male' as Gender,
-    activityLevel: 'very_active' as ActivityLevel,
+    gender: 'male',
+    activityLevel: 'very_active',
     dailyCalorieGoal: 2400,
     defaultWorkoutCalories: 1100,
     goal: {
-      mode: 'maintain' as 'lose' | 'maintain' | 'gain',
+      mode: 'maintain',
       rateKgPerWeek: 0.5,
-      targetWeightKg: undefined as number | undefined,
-      targetDate: undefined as string | undefined,
+      targetWeightKg: undefined,
+      targetDate: undefined,
       preferRate: true,
     },
     macroGoals: {
@@ -52,12 +65,12 @@ export default function FitnessSettings() {
         dailyCalorieGoal: data.userProfile.dailyCalorieGoal || (data.userProfile.baseTDEE || 3400) - 1000,
         defaultWorkoutCalories: data.userProfile.defaultWorkoutCalories || 1100,
         goal: data.userProfile.goal || {
-          mode: 'maintain',
+          mode: 'maintain' as const,
           rateKgPerWeek: 0.5,
           targetWeightKg: currentWeight,
           targetDate: undefined,
           preferRate: true,
-        },
+        } as GoalConfig,
         macroGoals: data.userProfile.macroGoals || {
           protein: 200,
           carbs: 0,
@@ -258,9 +271,9 @@ export default function FitnessSettings() {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Target Weight (kg)
                     </label>
                     <input
@@ -350,19 +363,19 @@ export default function FitnessSettings() {
                       className="rounded"
                     />
                     Use calculated goal as daily calorie target
-                  </label>
-                  <input
-                    type="number"
-                    value={profile.dailyCalorieGoal}
-                    onChange={(e) => setProfile({ ...profile, dailyCalorieGoal: parseFloat(e.target.value) || 0 })}
+              </label>
+              <input
+                type="number"
+                value={profile.dailyCalorieGoal}
+                onChange={(e) => setProfile({ ...profile, dailyCalorieGoal: parseFloat(e.target.value) || 0 })}
                     className="mt-2 w-full px-3 py-2 border border-blue-300 dark:border-blue-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"
                     placeholder="Or set manual calorie goal"
-                  />
+              />
                 </div>
               </div>
             );
           })()}
-        </div>
+            </div>
 
         {/* Other Settings */}
         <div>

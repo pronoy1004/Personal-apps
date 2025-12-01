@@ -31,7 +31,7 @@ export default function IntakeHistory() {
   const dailyIntakes = useMemo(() => {
     if (!data) return [];
     return getDailyIntakes(data.foodEntries);
-  }, [data?.foodEntries]);
+  }, [data]);
 
   const history = useMemo(() => {
     if (!dailyIntakes.length) return [];

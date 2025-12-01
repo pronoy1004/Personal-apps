@@ -17,7 +17,7 @@ export default function IntakeMetrics() {
   const dailyIntakes = useMemo(() => {
     if (!data) return [];
     return getDailyIntakes(data.foodEntries);
-  }, [data?.foodEntries]);
+  }, [data]);
   
   const targetCalories = data?.userProfile?.dailyCalorieGoal;
 
