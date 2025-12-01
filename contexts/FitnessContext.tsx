@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { loadFitnessData, loadFitnessDataAsync, saveFitnessData } from '@/lib/storage';
 import type { FitnessData, WeightEntry, FoodEntry, WorkoutEntry, UserProfile, FavoriteFood, MealType } from '@/lib/types';
 import { generateId } from '@/lib/utils';
-import { calculateTDEE } from '@/lib/utils/tdee';
+import { calculateTDEE, intakeFromGoal } from '@/lib/utils/tdee';
 import { format } from 'date-fns';
 import { getStartOfDay, isSameDay, formatDay } from '@/lib/utils/date';
 
@@ -90,32 +90,34 @@ export function FitnessProvider({ children }: { children: ReactNode }) {
         data.weightEntries.push(newEntry);
       }
 
-      // Update TDEE based on new weight
       const profile = data.userProfile;
       const currentWeight = weight;
-      data.userProfile.baseTDEE = calculateTDEE(
+      const newTDEE = calculateTDEE(
         currentWeight,
         profile.height,
         profile.age,
         profile.gender,
         profile.activityLevel
       );
+      
+      data.userProfile.baseTDEE = newTDEE;
+      
+      if (profile.goal) {
+        const goalIntake = intakeFromGoal(newTDEE, profile.goal, currentWeight);
+        data.userProfile.dailyCalorieGoal = goalIntake;
+      }
 
       return { ...data };
     });
   }, [updateData]);
 
   const addFoodEntry = useCallback((entry: Omit<FoodEntry, 'id' | 'timestamp'>) => {
-    console.log('addFoodEntry called with:', entry);
     updateData((data) => {
-      console.log('updateData called, current foodEntries length:', data.foodEntries.length);
       const newEntry: FoodEntry = {
         ...entry,
         id: generateId(),
         timestamp: new Date().toISOString(),
       };
-      console.log('New entry created:', newEntry);
-      // Create a completely new object with new arrays to ensure React detects the change
       return {
         ...data,
         foodEntries: [...data.foodEntries, newEntry],
@@ -239,12 +241,17 @@ export function FitnessProvider({ children }: { children: ReactNode }) {
     updateData((data) => {
       const updatedProfile = { ...data.userProfile, ...profile };
       
-      // Recalculate TDEE if weight or other relevant fields changed
+      const getEstimatedWeight = (height: number, gender: string): number => {
+        const heightM = height / 100;
+        const bmiTarget = gender === 'male' ? 22 : 21;
+        return Math.round(heightM * heightM * bmiTarget);
+      };
+
       const currentWeight = data.weightEntries.length > 0
         ? data.weightEntries[data.weightEntries.length - 1].weight
-        : 102; // Default weight
+        : getEstimatedWeight(updatedProfile.height, updatedProfile.gender);
       
-      updatedProfile.baseTDEE = calculateTDEE(
+      const newTDEE = calculateTDEE(
         currentWeight,
         updatedProfile.height,
         updatedProfile.age,
@@ -252,6 +259,13 @@ export function FitnessProvider({ children }: { children: ReactNode }) {
         updatedProfile.activityLevel,
         updatedProfile.defaultWorkoutCalories || 0
       );
+      
+      updatedProfile.baseTDEE = newTDEE;
+      
+      if (updatedProfile.goal) {
+        const goalIntake = intakeFromGoal(newTDEE, updatedProfile.goal, currentWeight);
+        updatedProfile.dailyCalorieGoal = goalIntake;
+      }
 
       data.userProfile = updatedProfile;
       return { ...data };

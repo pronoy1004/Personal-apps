@@ -20,11 +20,16 @@ export default function DailySummary() {
   const todayWorkouts = data.workoutEntries.filter((entry) =>
     isSameDay(entry.date, today)
   );
+  const getEstimatedWeight = (height: number, gender: string): number => {
+    const heightM = height / 100;
+    const bmiTarget = gender === 'male' ? 22 : 21;
+    return Math.round(heightM * heightM * bmiTarget);
+  };
+
   const currentWeight = data.weightEntries.length > 0
     ? data.weightEntries[data.weightEntries.length - 1].weight
-    : 102; // Default weight
+    : getEstimatedWeight(data.userProfile.height, data.userProfile.gender);
 
-  // Calculate total macros consumed
   const totalMacros = todayFoodEntries.reduce(
     (acc, entry) => ({
       calories: acc.calories + entry.macros.calories,
@@ -35,7 +40,6 @@ export default function DailySummary() {
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   );
 
-  // Calculate TDEE (activity multiplier already accounts for exercise)
   const tdee = calculateTDEE(
     currentWeight,
     data.userProfile.height,

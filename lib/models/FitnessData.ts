@@ -58,6 +58,18 @@ const MacroGoalsSchema = new Schema({
   fat: { type: Number, default: 0 },
 }, { _id: false });
 
+const GoalConfigSchema = new Schema({
+  mode: {
+    type: String,
+    enum: ['lose', 'maintain', 'gain'],
+    default: 'maintain'
+  },
+  rateKgPerWeek: Number,
+  targetWeightKg: Number,
+  targetDate: String,
+  preferRate: { type: Boolean, default: true },
+}, { _id: false });
+
 const UserProfileSchema = new Schema({
   height: { type: Number, required: true, default: 183 },
   age: { type: Number, required: true, default: 27 },
@@ -76,6 +88,7 @@ const UserProfileSchema = new Schema({
   baseTDEE: Number,
   dailyCalorieGoal: Number,
   defaultWorkoutCalories: Number,
+  goal: GoalConfigSchema,
   macroGoals: MacroGoalsSchema,
 }, { _id: false });
 

@@ -47,15 +47,6 @@ export default function FavoriteAddModal({ favorite, onClose }: FavoriteAddModal
       return;
     }
 
-    console.log('Adding food entry:', {
-      name: favorite.name,
-      mealType: selectedMeal,
-      quantity: qty,
-      unit: unit,
-      macros: calculatedMacros,
-    });
-
-    // Call addFoodEntry
     addFoodEntry({
       name: favorite.name,
       mealType: selectedMeal,
@@ -64,9 +55,6 @@ export default function FavoriteAddModal({ favorite, onClose }: FavoriteAddModal
       macros: calculatedMacros,
     });
     
-    console.log('Food entry added successfully');
-    
-    // Small delay to ensure state update completes before closing
     setTimeout(() => {
       setIsAdding(false);
       onClose();

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useFitness } from '@/hooks/useFitness';
-import { Settings, Save } from 'lucide-react';
-import type { ActivityLevel, Gender } from '@/lib/types';
+import { Settings, Save, Target, Calculator } from 'lucide-react';
+import type { ActivityLevel, Gender, GoalConfig } from '@/lib/types';
+import { calculateTDEE, intakeFromGoal, computeRateFromTarget } from '@/lib/utils/tdee';
 
 const ACTIVITY_LEVELS: { value: ActivityLevel; label: string }[] = [
   { value: 'sedentary', label: 'Sedentary (little to no exercise)' },
@@ -23,6 +24,13 @@ export default function FitnessSettings() {
     activityLevel: 'very_active' as ActivityLevel,
     dailyCalorieGoal: 2400,
     defaultWorkoutCalories: 1100,
+    goal: {
+      mode: 'maintain' as 'lose' | 'maintain' | 'gain',
+      rateKgPerWeek: 0.5,
+      targetWeightKg: undefined as number | undefined,
+      targetDate: undefined as string | undefined,
+      preferRate: true,
+    },
     macroGoals: {
       protein: 200,
       carbs: 0,
@@ -32,6 +40,10 @@ export default function FitnessSettings() {
 
   useEffect(() => {
     if (data) {
+      const currentWeight = data.weightEntries.length > 0
+        ? data.weightEntries[data.weightEntries.length - 1].weight
+        : undefined;
+      
       setProfile({
         height: data.userProfile.height,
         age: data.userProfile.age,
@@ -39,6 +51,13 @@ export default function FitnessSettings() {
         activityLevel: data.userProfile.activityLevel,
         dailyCalorieGoal: data.userProfile.dailyCalorieGoal || (data.userProfile.baseTDEE || 3400) - 1000,
         defaultWorkoutCalories: data.userProfile.defaultWorkoutCalories || 1100,
+        goal: data.userProfile.goal || {
+          mode: 'maintain',
+          rateKgPerWeek: 0.5,
+          targetWeightKg: currentWeight,
+          targetDate: undefined,
+          preferRate: true,
+        },
         macroGoals: data.userProfile.macroGoals || {
           protein: 200,
           carbs: 0,
@@ -52,7 +71,33 @@ export default function FitnessSettings() {
 
   const handleSave = () => {
     setIsSaving(true);
-    updateUserProfile(profile);
+    
+    const currentWeight = data.weightEntries.length > 0
+      ? data.weightEntries[data.weightEntries.length - 1].weight
+      : undefined;
+    
+    const tdee = currentWeight ? calculateTDEE(
+      currentWeight,
+      profile.height,
+      profile.age,
+      profile.gender,
+      profile.activityLevel
+    ) : data.userProfile.baseTDEE || 3400;
+    
+    let finalCalorieGoal = profile.dailyCalorieGoal;
+    
+    if (profile.goal && profile.goal.mode !== 'maintain' && currentWeight) {
+      const calculatedGoal = intakeFromGoal(tdee, profile.goal, currentWeight);
+      if (Math.abs(profile.dailyCalorieGoal - calculatedGoal) < 50) {
+        finalCalorieGoal = calculatedGoal;
+      }
+    }
+    
+    updateUserProfile({
+      ...profile,
+      dailyCalorieGoal: finalCalorieGoal,
+    });
+    
     setTimeout(() => {
       setIsSaving(false);
     }, 500);
@@ -124,24 +169,205 @@ export default function FitnessSettings() {
           </div>
         </div>
 
-        {/* Goals */}
+        {/* Goal Configuration */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Goals</h3>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Daily Calorie Goal
-              </label>
-              <input
-                type="number"
-                value={profile.dailyCalorieGoal}
-                onChange={(e) => setProfile({ ...profile, dailyCalorieGoal: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Current TDEE: {data.userProfile.baseTDEE || 3400} cal
-              </div>
+          <div className="flex items-center gap-2 mb-4">
+            <Target className="text-blue-500" size={20} />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Weight Goal</h3>
+          </div>
+          
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Goal Mode
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['lose', 'maintain', 'gain'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setProfile({ 
+                    ...profile, 
+                    goal: { ...profile.goal, mode } 
+                  })}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    profile.goal.mode === mode
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </button>
+              ))}
             </div>
+          </div>
+
+          {profile.goal.mode !== 'maintain' && (
+            <>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Goal Method
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setProfile({ 
+                      ...profile, 
+                      goal: { ...profile.goal, preferRate: true } 
+                    })}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      profile.goal.preferRate
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    Rate (kg/week)
+                  </button>
+                  <button
+                    onClick={() => setProfile({ 
+                      ...profile, 
+                      goal: { ...profile.goal, preferRate: false } 
+                    })}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      !profile.goal.preferRate
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    Target Weight
+                  </button>
+                </div>
+              </div>
+
+              {profile.goal.preferRate ? (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {profile.goal.mode === 'lose' ? 'Weight Loss Rate' : 'Weight Gain Rate'} (kg/week)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0.1"
+                    max={profile.goal.mode === 'lose' ? '2' : '1'}
+                    value={profile.goal.rateKgPerWeek || 0.5}
+                    onChange={(e) => setProfile({ 
+                      ...profile, 
+                      goal: { ...profile.goal, rateKgPerWeek: parseFloat(e.target.value) || 0.5 } 
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  />
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Recommended: {profile.goal.mode === 'lose' ? '0.5-1.0 kg/week' : '0.25-0.5 kg/week'}
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Target Weight (kg)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={profile.goal.targetWeightKg || ''}
+                      onChange={(e) => setProfile({ 
+                        ...profile, 
+                        goal: { ...profile.goal, targetWeightKg: parseFloat(e.target.value) || undefined } 
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Target Date
+                    </label>
+                    <input
+                      type="date"
+                      value={profile.goal.targetDate || ''}
+                      onChange={(e) => setProfile({ 
+                        ...profile, 
+                        goal: { ...profile.goal, targetDate: e.target.value || undefined } 
+                      })}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {(() => {
+            const currentWeight = data.weightEntries.length > 0
+              ? data.weightEntries[data.weightEntries.length - 1].weight
+              : undefined;
+            const tdee = currentWeight ? calculateTDEE(
+              currentWeight,
+              profile.height,
+              profile.age,
+              profile.gender,
+              profile.activityLevel
+            ) : data.userProfile.baseTDEE || 3400;
+            
+            const calculatedGoal = profile.goal.mode !== 'maintain' && currentWeight
+              ? intakeFromGoal(tdee, profile.goal, currentWeight)
+              : tdee;
+            
+            const computedRate = profile.goal.targetWeightKg && profile.goal.targetDate && currentWeight
+              ? computeRateFromTarget(currentWeight, profile.goal.targetWeightKg, profile.goal.targetDate)
+              : null;
+            
+            return (
+              <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calculator className="text-blue-600 dark:text-blue-400" size={18} />
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-100">Calculated Calorie Goal</h4>
+                </div>
+                <div className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-1">
+                  {calculatedGoal} cal/day
+                </div>
+                <div className="text-sm text-blue-700 dark:text-blue-300">
+                  Based on TDEE: {tdee} cal/day
+                  {profile.goal.mode === 'lose' && calculatedGoal < tdee && (
+                    <span className="ml-2">({(tdee - calculatedGoal).toFixed(0)} cal deficit/day)</span>
+                  )}
+                  {profile.goal.mode === 'gain' && calculatedGoal > tdee && (
+                    <span className="ml-2">({(calculatedGoal - tdee).toFixed(0)} cal surplus/day)</span>
+                  )}
+                  {computedRate !== null && (
+                    <div className="mt-1 text-xs">
+                      Computed rate: {Math.abs(computedRate).toFixed(2)} kg/week
+                    </div>
+                  )}
+                </div>
+                <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-700">
+                  <label className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
+                    <input
+                      type="checkbox"
+                      checked={profile.dailyCalorieGoal === calculatedGoal}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setProfile({ ...profile, dailyCalorieGoal: calculatedGoal });
+                        }
+                      }}
+                      className="rounded"
+                    />
+                    Use calculated goal as daily calorie target
+                  </label>
+                  <input
+                    type="number"
+                    value={profile.dailyCalorieGoal}
+                    onChange={(e) => setProfile({ ...profile, dailyCalorieGoal: parseFloat(e.target.value) || 0 })}
+                    className="mt-2 w-full px-3 py-2 border border-blue-300 dark:border-blue-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"
+                    placeholder="Or set manual calorie goal"
+                  />
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* Other Settings */}
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Other Settings</h3>
+          <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Default Workout Calories

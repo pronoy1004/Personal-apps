@@ -10,6 +10,8 @@ import WorkoutLogger from './WorkoutLogger';
 import DailySummary from './DailySummary';
 import WeightProjections from './WeightProjections';
 import FitnessSettings from './FitnessSettings';
+import IntakeMetrics from './IntakeMetrics';
+import IntakeHistory from './IntakeHistory';
 import { Calendar, Settings, TrendingUp, UtensilsCrossed, Activity } from 'lucide-react';
 import type { MealType } from '@/lib/types';
 
@@ -47,32 +49,15 @@ export default function FitnessDashboard() {
       isSameDay(entry.timestamp, today)
     );
 
-    // Check if dragging a favorite
     if (active.id.toString().startsWith('favorite-')) {
       const favoriteId = active.id.toString().replace('favorite-', '');
-      console.log('Dragging favorite, ID:', favoriteId);
       const favorite = data.favoriteFoods.find((f) => f.id === favoriteId);
       
-      console.log('Found favorite:', favorite);
-      console.log('Drop target:', over.id);
-      
       if (favorite) {
-        // Check if dropped on a meal type droppable
         const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
         const targetMeal = mealTypes.find((meal) => over.id === `meal-${meal}`);
         
-        console.log('Target meal:', targetMeal);
-        
         if (targetMeal) {
-          console.log('Adding favorite to meal:', {
-            name: favorite.name,
-            mealType: targetMeal,
-            quantity: favorite.baseQuantity,
-            unit: favorite.unit,
-            macros: favorite.macros,
-          });
-          
-          // Add favorite to meal
           addFoodEntry({
             name: favorite.name,
             mealType: targetMeal,
@@ -80,13 +65,7 @@ export default function FitnessDashboard() {
             unit: favorite.unit,
             macros: favorite.macros,
           });
-          
-          console.log('Food entry added via drag-drop');
-        } else {
-          console.log('Not dropped on a valid meal zone');
         }
-      } else {
-        console.log('Favorite not found');
       }
       return;
     }
@@ -257,7 +236,8 @@ export default function FitnessDashboard() {
         {activeTab === 'history' && (
           <div className="space-y-6">
             <WeightTracker showHistory={true} />
-            {/* Additional history views can be added here */}
+            <IntakeMetrics />
+            <IntakeHistory />
           </div>
         )}
 

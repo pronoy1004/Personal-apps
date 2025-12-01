@@ -1,4 +1,4 @@
-import type { Gender, ActivityLevel, WeightEntry, FoodEntry } from '../types';
+import type { Gender, ActivityLevel, WeightEntry, FoodEntry, GoalConfig } from '../types';
 
 // Activity multipliers for TDEE calculation
 const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {
@@ -261,5 +261,74 @@ export function calculateDailyBalance(
   tdee: number
 ): number {
   return caloriesConsumed - tdee; // Negative = deficit, Positive = surplus
+}
+
+/**
+ * Calculate daily deficit/surplus from weekly rate (kg/week)
+ * Positive rate = deficit for weight loss
+ * Negative rate = surplus for weight gain
+ */
+export function deficitFromRate(rateKgPerWeek: number): number {
+  return (rateKgPerWeek * CALORIES_PER_KG) / 7;
+}
+
+/**
+ * Compute weekly rate (kg/week) from target weight and date
+ * Returns positive for weight loss, negative for weight gain
+ */
+export function computeRateFromTarget(
+  currentWeight: number,
+  targetWeight: number,
+  targetDate: string
+): number {
+  const targetDateObj = new Date(targetDate);
+  const now = new Date();
+  const daysRemaining = Math.max(1, (targetDateObj.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+  const weeksRemaining = daysRemaining / 7;
+  
+  if (weeksRemaining <= 0) return 0;
+  
+  const weightDifference = currentWeight - targetWeight; // Positive = need to lose
+  const rateKgPerWeek = weightDifference / weeksRemaining;
+  
+  return rateKgPerWeek;
+}
+
+/**
+ * Calculate daily calorie intake from goal configuration
+ * Returns the target daily calorie intake
+ */
+export function intakeFromGoal(
+  tdee: number,
+  goal: GoalConfig,
+  currentWeight: number
+): number {
+  if (goal.mode === 'maintain') {
+    return tdee;
+  }
+
+  let rateKgPerWeek: number | undefined;
+  
+  if (goal.preferRate && goal.rateKgPerWeek !== undefined) {
+    rateKgPerWeek = goal.rateKgPerWeek;
+  } else if (goal.targetWeightKg !== undefined && goal.targetDate !== undefined) {
+    rateKgPerWeek = computeRateFromTarget(currentWeight, goal.targetWeightKg, goal.targetDate);
+  } else if (goal.rateKgPerWeek !== undefined) {
+    rateKgPerWeek = goal.rateKgPerWeek;
+  }
+
+  if (rateKgPerWeek === undefined) {
+    return tdee;
+  }
+
+  const dailyDeficit = deficitFromRate(rateKgPerWeek);
+  
+  if (goal.mode === 'lose') {
+    return Math.max(1200, Math.round(tdee - Math.abs(dailyDeficit)));
+  } else if (goal.mode === 'gain') {
+    return Math.round(tdee + Math.abs(dailyDeficit));
+  }
+  
+  return tdee;
 }
 

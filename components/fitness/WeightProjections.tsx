@@ -1,9 +1,9 @@
 'use client';
 
 import { useFitness } from '@/hooks/useFitness';
-import { calculateTDEE, calculateWeightProjection, calculateActualTDEE, getCalorieRecommendations } from '@/lib/utils/tdee';
+import { calculateTDEE, calculateWeightProjection, calculateActualTDEE, getCalorieRecommendations, intakeFromGoal } from '@/lib/utils/tdee';
 import { TrendingDown, Calendar, Zap, Target, AlertTriangle, CheckCircle } from 'lucide-react';
-import { format, addDays, subDays } from 'date-fns';
+import { format, addDays, subDays, differenceInDays } from 'date-fns';
 import { getStartOfDay } from '@/lib/utils/date';
 import type { FoodEntry } from '@/lib/types';
 
@@ -12,7 +12,13 @@ export default function WeightProjections() {
 
   if (!data) return null;
 
-  const currentWeight = getCurrentWeight() || 102;
+  const getEstimatedWeight = (height: number, gender: string): number => {
+    const heightM = height / 100;
+    const bmiTarget = gender === 'male' ? 22 : 21;
+    return Math.round(heightM * heightM * bmiTarget);
+  };
+
+  const currentWeight = getCurrentWeight() || getEstimatedWeight(data.userProfile.height, data.userProfile.gender);
 
   // Calculate formula-based TDEE
   const formulaTDEE = calculateTDEE(
@@ -105,57 +111,100 @@ export default function WeightProjections() {
     daysWithData = avg7Days.daysWithData;
   }
   
-  // Get target calorie goal
-  const targetGoal = data.userProfile.dailyCalorieGoal;
+  // Get goal-based intake
+  let goalIntake = effectiveTDEE;
+  let intakeSource = 'TDEE (maintenance)';
+  
+  if (data.userProfile.goal && data.userProfile.goal.mode !== 'maintain') {
+    goalIntake = intakeFromGoal(effectiveTDEE, data.userProfile.goal, currentWeight);
+    if (data.userProfile.goal.preferRate && data.userProfile.goal.rateKgPerWeek) {
+      intakeSource = `Goal: ${data.userProfile.goal.mode === 'lose' ? 'lose' : 'gain'} ${Math.abs(data.userProfile.goal.rateKgPerWeek)}kg/week`;
+    } else if (data.userProfile.goal.targetWeightKg && data.userProfile.goal.targetDate) {
+      const daysRemaining = differenceInDays(new Date(data.userProfile.goal.targetDate), new Date());
+      intakeSource = `Goal: reach ${data.userProfile.goal.targetWeightKg}kg in ${daysRemaining} days`;
+    }
+  } else if (data.userProfile.dailyCalorieGoal) {
+    goalIntake = data.userProfile.dailyCalorieGoal;
+    intakeSource = 'Manual calorie goal';
+  }
   
   // Determine which intake to use for projections
-  // If we have good historical data, use a weighted average between historical and target
-  // Otherwise, prefer target if set, otherwise use historical
-  let projectedIntake = 0;
-  let intakeSource = '';
+  // Use goal intake as primary, but show range based on historical variance
+  let projectedIntake = goalIntake;
   
-  if (averageIntake > 0 && targetGoal) {
-    // Weighted average: 70% historical, 30% target (if we have good data)
-    // This accounts for both actual behavior and goals
-    const historicalWeight = daysWithData >= 7 ? 0.7 : 0.5;
-    const targetWeight = 1 - historicalWeight;
-    projectedIntake = Math.round(averageIntake * historicalWeight + targetGoal * targetWeight);
-    intakeSource = `Weighted (${dataSource} + target)`;
-  } else if (targetGoal) {
-    projectedIntake = targetGoal;
-    intakeSource = 'Daily target';
-  } else if (averageIntake > 0) {
-    projectedIntake = averageIntake;
-    intakeSource = dataSource;
-  } else {
-    // Fallback: assume a moderate deficit
-    projectedIntake = effectiveTDEE - 500;
-    intakeSource = 'Estimated (TDEE - 500)';
+  if (averageIntake > 0) {
+    const variance = Math.abs(averageIntake - goalIntake);
+    if (variance > 200 && daysWithData >= 7) {
+      intakeSource += ` (${dataSource}: ${averageIntake} cal)`;
+    }
   }
   
   // Calculate daily deficit based on effective TDEE (positive = deficit, negative = surplus)
   const dailyDeficit = effectiveTDEE - projectedIntake;
+  
+  // Calculate range: ±10% of goal intake for projections
+  const intakeRange = Math.round(goalIntake * 0.1);
+  const minIntake = goalIntake - intakeRange;
+  const maxIntake = goalIntake + intakeRange;
 
-  // Projections for different time periods
+  // Projections for different time periods with range
   const projections = [
     { label: '1 Week', days: 7 },
     { label: '2 Weeks', days: 14 },
     { label: '1 Month', days: 30 },
     { label: '3 Months', days: 90 },
-  ].map(({ label, days }) => ({
-    label,
-    days,
-    projectedWeight: calculateWeightProjection(
+  ].map(({ label, days }) => {
+    const baseDeficit = effectiveTDEE - projectedIntake;
+    const minDeficit = effectiveTDEE - maxIntake;
+    const maxDeficit = effectiveTDEE - minIntake;
+    
+    const projectedWeight = calculateWeightProjection(
       currentWeight,
-      dailyDeficit,
+      baseDeficit,
       days,
       data.userProfile.height,
       data.userProfile.age,
       data.userProfile.gender,
       data.userProfile.activityLevel
-    ),
-    date: format(addDays(new Date(), days), 'MMM d, yyyy'),
-  }));
+    );
+    
+    const minWeight = calculateWeightProjection(
+      currentWeight,
+      minDeficit,
+      days,
+      data.userProfile.height,
+      data.userProfile.age,
+      data.userProfile.gender,
+      data.userProfile.activityLevel
+    );
+    
+    const maxWeight = calculateWeightProjection(
+      currentWeight,
+      maxDeficit,
+      days,
+      data.userProfile.height,
+      data.userProfile.age,
+      data.userProfile.gender,
+      data.userProfile.activityLevel
+    );
+    
+    const targetDate = data.userProfile.goal?.targetDate ? new Date(data.userProfile.goal.targetDate) : null;
+    const targetWeight = data.userProfile.goal?.targetWeightKg;
+    const willHitTarget = targetDate && targetWeight
+      ? days >= differenceInDays(targetDate, new Date())
+        && projectedWeight <= targetWeight + 1 && projectedWeight >= targetWeight - 1
+      : null;
+    
+    return {
+      label,
+      days,
+      projectedWeight,
+      minWeight,
+      maxWeight,
+      date: format(addDays(new Date(), days), 'MMM d, yyyy'),
+      willHitTarget,
+    };
+  });
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -298,12 +347,17 @@ export default function WeightProjections() {
           <div className="text-sm text-gray-600 dark:text-gray-400">
             <span className="font-medium">Intake basis:</span> {intakeSource}
             {daysWithData > 0 && ` (${daysWithData} days of data)`}
-            {averageIntake > 0 && targetGoal && (
+            {averageIntake > 0 && (
               <span className="ml-2 text-xs">
-                (Avg: {averageIntake} cal, Target: {targetGoal} cal)
+                (Recent avg: {averageIntake} cal)
               </span>
             )}
           </div>
+          {minIntake !== maxIntake && (
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="font-medium">Intake range:</span> {minIntake} - {maxIntake} cal/day (±{intakeRange} cal)
+            </div>
+          )}
         </div>
       </div>
 
@@ -348,12 +402,19 @@ export default function WeightProjections() {
         {projections.map((projection) => (
           <div
             key={projection.days}
-            className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700"
+            className={`p-4 rounded-lg border ${
+              projection.willHitTarget
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+                : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700'
+            }`}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Calendar size={18} className="text-gray-500" />
                 <span className="font-semibold text-gray-900 dark:text-gray-100">{projection.label}</span>
+                {projection.willHitTarget && (
+                  <CheckCircle className="text-green-600 dark:text-green-400" size={18} />
+                )}
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -362,6 +423,17 @@ export default function WeightProjections() {
                 <div className="text-sm text-gray-600 dark:text-gray-400">{projection.date}</div>
               </div>
             </div>
+            {projection.minWeight !== projection.maxWeight && (
+              <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Range: <span className="font-medium">{projection.minWeight.toFixed(2)}</span> - <span className="font-medium">{projection.maxWeight.toFixed(2)}</span> kg
+                <span className="text-xs ml-2">(based on intake variance)</span>
+              </div>
+            )}
+            {projection.willHitTarget && (
+              <div className="mt-2 text-sm text-green-700 dark:text-green-300 font-medium">
+                ✓ On track to hit target weight
+              </div>
+            )}
             <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               {projection.projectedWeight < currentWeight ? (
                 <span className="text-green-600 dark:text-green-400">

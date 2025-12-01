@@ -133,6 +133,14 @@ export interface WorkoutEntry {
 export type Gender = 'male' | 'female';
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
 
+export interface GoalConfig {
+  mode: 'lose' | 'maintain' | 'gain';
+  rateKgPerWeek?: number; // e.g., 0.5 for lose 0.5kg/week
+  targetWeightKg?: number;
+  targetDate?: string; // ISO date string
+  preferRate?: boolean; // true = use rate, false = use target weight/date
+}
+
 export interface UserProfile {
   height: number; // cm
   age: number;
@@ -141,6 +149,7 @@ export interface UserProfile {
   baseTDEE?: number; // calculated TDEE
   dailyCalorieGoal?: number;
   defaultWorkoutCalories?: number; // default daily workout calories
+  goal?: GoalConfig;
   macroGoals?: {
     protein: number; // grams
     carbs: number; // grams
