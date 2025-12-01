@@ -278,7 +278,7 @@ export default function WeightProjections() {
                   ? 'text-red-600 dark:text-red-400'
                   : 'text-gray-600 dark:text-gray-400'
               }`}>
-                {actualTDEEResult.weightChange > 0 ? '+' : ''}{actualTDEEResult.weightChange} kg
+                {actualTDEEResult.weightChange > 0 ? '+' : ''}{actualTDEEResult.weightChange.toFixed(2)} kg
               </div>
               <div className="text-xs text-purple-600 dark:text-purple-400">
                 Last {actualTDEEResult.daysAnalyzed} days

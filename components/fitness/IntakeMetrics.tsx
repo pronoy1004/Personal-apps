@@ -5,29 +5,35 @@ import { useFitness } from '@/hooks/useFitness';
 import { getDailyIntakes, getIntakeMetrics, type IntakePeriod } from '@/lib/utils/intake-analytics';
 import { TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react';
 
+const PERIODS: IntakePeriod[] = [
+  { period: '7d', days: 7 },
+  { period: '14d', days: 14 },
+  { period: '30d', days: 30 },
+];
+
 export default function IntakeMetrics() {
   const { data } = useFitness();
 
-  if (!data) return null;
-
-  const dailyIntakes = useMemo(() => getDailyIntakes(data.foodEntries), [data.foodEntries]);
+  const dailyIntakes = useMemo(() => {
+    if (!data) return [];
+    return getDailyIntakes(data.foodEntries);
+  }, [data?.foodEntries]);
   
-  const targetCalories = data.userProfile.dailyCalorieGoal;
-  
-  const periods: IntakePeriod[] = [
-    { period: '7d', days: 7 },
-    { period: '14d', days: 14 },
-    { period: '30d', days: 30 },
-  ];
+  const targetCalories = data?.userProfile?.dailyCalorieGoal;
 
   const metrics = useMemo(() => {
-    return periods.map((period) => ({
+    if (!dailyIntakes.length) return [];
+    return PERIODS.map((period) => ({
       period,
       metrics: getIntakeMetrics(dailyIntakes, period, targetCalories),
     }));
   }, [dailyIntakes, targetCalories]);
 
-  const primaryMetrics = metrics.find(m => m.period.period === '30d') || metrics[metrics.length - 1];
+  if (!data) return null;
+
+  const primaryMetrics = metrics.length > 0 
+    ? (metrics.find(m => m.period.period === '30d') || metrics[metrics.length - 1])
+    : null;
 
   if (!primaryMetrics || primaryMetrics.metrics.daysWithData === 0) {
     return (

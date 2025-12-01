@@ -28,11 +28,19 @@ export default function IntakeHistory() {
   const { data } = useFitness();
   const [windowDays, setWindowDays] = useState<30 | 60 | 90>(30);
 
-  if (!data) return null;
+  const dailyIntakes = useMemo(() => {
+    if (!data) return [];
+    return getDailyIntakes(data.foodEntries);
+  }, [data?.foodEntries]);
 
-  const dailyIntakes = useMemo(() => getDailyIntakes(data.foodEntries), [data.foodEntries]);
-  const history = useMemo(() => getIntakeHistory(dailyIntakes, windowDays), [dailyIntakes, windowDays]);
-  const targetCalories = data.userProfile.dailyCalorieGoal;
+  const history = useMemo(() => {
+    if (!dailyIntakes.length) return [];
+    return getIntakeHistory(dailyIntakes, windowDays);
+  }, [dailyIntakes, windowDays]);
+
+  const targetCalories = data?.userProfile?.dailyCalorieGoal;
+
+  if (!data) return null;
 
   if (history.length === 0) {
     return (
