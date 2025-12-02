@@ -37,7 +37,8 @@ export default function WeightProjections() {
     data.userProfile.age,
     data.userProfile.gender,
     data.userProfile.activityLevel,
-    14 // Analyze last 14 days
+    14, // Analyze last 14 days
+    data.workoutEntries
   );
 
   // Use actual TDEE if available and confident, otherwise use formula

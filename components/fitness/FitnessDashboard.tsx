@@ -12,6 +12,7 @@ import WeightProjections from './WeightProjections';
 import FitnessSettings from './FitnessSettings';
 import IntakeMetrics from './IntakeMetrics';
 import IntakeHistory from './IntakeHistory';
+import WorkoutHistory from './WorkoutHistory';
 import { Calendar, Settings, TrendingUp, UtensilsCrossed, Activity } from 'lucide-react';
 import type { MealType } from '@/lib/types';
 
@@ -238,6 +239,7 @@ export default function FitnessDashboard() {
             <WeightTracker showHistory={true} />
             <IntakeMetrics />
             <IntakeHistory />
+            <WorkoutHistory />
           </div>
         )}
 

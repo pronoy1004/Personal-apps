@@ -23,43 +23,67 @@ export default function WorkoutLogger() {
   const [workoutType, setWorkoutType] = useState('Weight Training');
   const [duration, setDuration] = useState('');
   const [calories, setCalories] = useState('');
-  const [useDefault, setUseDefault] = useState(false);
+  const todayDate = new Date().toISOString().split('T')[0];
+  const [workoutDate, setWorkoutDate] = useState(() => todayDate);
 
   if (!data) return null;
 
   const todayWorkouts = getTodayWorkoutEntries();
   const defaultCalories = data.userProfile.defaultWorkoutCalories || 1100;
 
+  const buildISOFromDateParts = (dateString: string) => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    if ([year, month, day].some((n) => Number.isNaN(n))) {
+      return new Date().toISOString();
+    }
+    const localDate = new Date();
+    localDate.setFullYear(year, month - 1, day);
+    localDate.setHours(12, 0, 0, 0); // Noon local time to avoid 6 AM cutoff collisions
+    return localDate.toISOString();
+  };
+
+  const resolveSelectedDateISO = (value?: string) => {
+    const trimmed = value?.trim();
+    if (trimmed) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        return buildISOFromDateParts(trimmed);
+      }
+      const parsed = new Date(trimmed);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed.toISOString();
+      }
+    }
+    return buildISOFromDateParts(workoutDate || todayDate);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (useDefault) {
-      // Add default workout
-      addWorkoutEntry({
-        type: 'Daily Average',
-        duration: 0,
-        caloriesBurned: defaultCalories,
-        date: new Date().toISOString(),
-      });
-    } else {
-      if (!duration || !calories || isNaN(parseFloat(duration)) || isNaN(parseFloat(calories))) {
-        return;
-      }
-
-      addWorkoutEntry({
-        type: workoutType,
-        duration: parseFloat(duration),
-        caloriesBurned: parseFloat(calories),
-        date: new Date().toISOString(),
-      });
+    if (!duration || !calories || isNaN(parseFloat(duration)) || isNaN(parseFloat(calories))) {
+      return;
     }
+
+    addWorkoutEntry({
+      type: workoutType,
+      duration: parseFloat(duration),
+      caloriesBurned: parseFloat(calories),
+      date: resolveSelectedDateISO(),
+    });
 
     // Reset form
     setWorkoutType('Weight Training');
     setDuration('');
     setCalories('');
-    setUseDefault(false);
     setShowForm(false);
+  };
+
+  const handleQuickAdd = () => {
+    addWorkoutEntry({
+      type: 'Daily Average',
+      duration: 0,
+      caloriesBurned: defaultCalories,
+      date: resolveSelectedDateISO(),
+    });
   };
 
   const handleImport = () => {
@@ -81,11 +105,16 @@ export default function WorkoutLogger() {
             if (Array.isArray(data)) {
               data.forEach((workout: any) => {
                 if (workout.type && workout.caloriesBurned) {
+                  const resolvedDate = workout.date
+                    ? resolveSelectedDateISO(
+                        /^\d{4}-\d{2}-\d{2}$/.test(workout.date.trim()) ? workout.date.trim() : workout.date
+                      )
+                    : resolveSelectedDateISO();
                   addWorkoutEntry({
                     type: workout.type,
                     duration: workout.duration || 0,
                     caloriesBurned: workout.caloriesBurned,
-                    date: workout.date || new Date().toISOString(),
+                    date: resolvedDate,
                   });
                 }
               });
@@ -96,11 +125,16 @@ export default function WorkoutLogger() {
             lines.slice(1).forEach((line) => {
               const [type, duration, calories, date] = line.split(',');
               if (type && calories) {
+                const trimmedDate = date?.trim();
                 addWorkoutEntry({
                   type: type.trim(),
                   duration: parseFloat(duration) || 0,
                   caloriesBurned: parseFloat(calories),
-                  date: date ? date.trim() : new Date().toISOString(),
+                  date: trimmedDate
+                    ? resolveSelectedDateISO(
+                        /^\d{4}-\d{2}-\d{2}$/.test(trimmedDate) ? trimmedDate : trimmedDate
+                      )
+                    : resolveSelectedDateISO(),
                 });
               }
             });
@@ -145,14 +179,27 @@ export default function WorkoutLogger() {
         </div>
       </div>
 
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Workout Date
+        </label>
+        <input
+          type="date"
+          value={workoutDate}
+          max={todayDate}
+          onChange={(e) => setWorkoutDate(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          New workouts, quick adds, and imports without a date will use this selection.
+        </p>
+      </div>
+
       {/* Quick Add Default */}
       {!showForm && (
         <div className="mb-6">
           <button
-            onClick={() => {
-              setUseDefault(true);
-              handleSubmit(new Event('submit') as any);
-            }}
+            onClick={handleQuickAdd}
             className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-left"
           >
             <div className="font-medium">Quick Add: Daily Average</div>
@@ -175,7 +222,6 @@ export default function WorkoutLogger() {
                 setWorkoutType('Weight Training');
                 setDuration('');
                 setCalories('');
-                setUseDefault(false);
               }}
               className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
             >
@@ -211,8 +257,7 @@ export default function WorkoutLogger() {
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                required={!useDefault}
-                disabled={useDefault}
+                required
               />
             </div>
             <div>
@@ -225,8 +270,7 @@ export default function WorkoutLogger() {
                 value={calories}
                 onChange={(e) => setCalories(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                required={!useDefault}
-                disabled={useDefault}
+                required
               />
             </div>
           </div>

@@ -1,4 +1,4 @@
-import type { Gender, ActivityLevel, WeightEntry, FoodEntry, GoalConfig } from '../types';
+import type { Gender, ActivityLevel, WeightEntry, FoodEntry, WorkoutEntry, GoalConfig } from '../types';
 
 // Activity multipliers for TDEE calculation
 const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {
@@ -68,7 +68,8 @@ export function calculateActualTDEE(
   age: number,
   gender: Gender,
   activityLevel: ActivityLevel,
-  analysisWindowDays: number = 14
+  analysisWindowDays: number = 14,
+  workoutEntries: WorkoutEntry[] = []
 ): ActualTDEEResult | null {
   if (weightEntries.length < 2) {
     return null;
@@ -113,11 +114,24 @@ export function calculateActualTDEE(
     return entryTime >= startTime && entryTime <= endTime;
   });
 
+  // Get workout entries in this period
+  const workoutsInPeriod = workoutEntries.filter((w) => {
+    const workoutTime = new Date(w.date).getTime();
+    return workoutTime >= startTime && workoutTime <= endTime;
+  });
+
   // Group food by day to count days with tracking
   const foodByDay = new Map<string, number>();
   foodInPeriod.forEach((f) => {
     const dayKey = new Date(f.timestamp).toISOString().split('T')[0];
     foodByDay.set(dayKey, (foodByDay.get(dayKey) || 0) + f.macros.calories);
+  });
+
+  // Group workouts by day to calculate daily workout calories
+  const workoutsByDay = new Map<string, number>();
+  workoutsInPeriod.forEach((w) => {
+    const dayKey = new Date(w.date).toISOString().split('T')[0];
+    workoutsByDay.set(dayKey, (workoutsByDay.get(dayKey) || 0) + w.caloriesBurned);
   });
 
   const daysWithFoodData = foodByDay.size;
@@ -131,15 +145,22 @@ export function calculateActualTDEE(
     (sum, f) => sum + f.macros.calories, 0
   );
 
+  // Total workout calories burned
+  const totalWorkoutCalories = workoutsInPeriod.reduce(
+    (sum, w) => sum + w.caloriesBurned, 0
+  );
+
   // Average daily intake (only counting days with data)
   const avgDailyIntake = Math.round(totalCaloriesConsumed / daysWithFoodData);
 
   // Calculate actual TDEE:
   // If weight changed, the calorie balance = Weight Change * 7700
-  // Total expenditure = Total consumed - (Weight Change * 7700)
+  // Net calories = Total consumed - Workout calories burned
+  // Total expenditure = Net calories - (Weight Change * 7700)
   // (negative weight change = loss = we spent more than we ate)
   const calorieBalance = weightChange * CALORIES_PER_KG;
-  const totalExpenditure = totalCaloriesConsumed - calorieBalance;
+  const netCalories = totalCaloriesConsumed - totalWorkoutCalories;
+  const totalExpenditure = netCalories - calorieBalance;
   const actualTDEE = Math.round(totalExpenditure / daysWithFoodData);
 
   // Calculate formula-based TDEE for comparison
@@ -157,15 +178,19 @@ export function calculateActualTDEE(
 
   const trackingCoverage = daysWithFoodData / daysBetween;
   const weightDataPoints = recentWeights.length;
+  const daysWithWorkouts = workoutsByDay.size;
+  const workoutTrackingNote = daysWithWorkouts > 0 
+    ? ` (${daysWithWorkouts} days with workouts)` 
+    : '';
 
   if (trackingCoverage >= 0.9 && weightDataPoints >= 7 && daysBetween >= 7) {
     confidence = 'high';
-    dataQuality = 'Excellent tracking coverage';
+    dataQuality = `Excellent tracking coverage${workoutTrackingNote}`;
   } else if (trackingCoverage >= 0.7 && weightDataPoints >= 4 && daysBetween >= 5) {
     confidence = 'medium';
-    dataQuality = 'Good tracking coverage';
+    dataQuality = `Good tracking coverage${workoutTrackingNote}`;
   } else {
-    dataQuality = 'Limited data - track more consistently for accuracy';
+    dataQuality = `Limited data - track more consistently for accuracy${workoutTrackingNote}`;
   }
 
   // Sanity check: if the calculated TDEE is unrealistic, return null
