@@ -51,6 +51,15 @@ export function getUSDAApiKey(): string | undefined {
 }
 
 /**
+ * Get OpenAI API key
+ * First tries environment variable OPENAI_API_KEY (server-side only)
+ * @returns API key or undefined
+ */
+export function getOpenAIApiKey(): string | undefined {
+  return process.env.OPENAI_API_KEY;
+}
+
+/**
  * Get all environment configuration
  * @returns Environment configuration object
  */
@@ -78,6 +87,7 @@ export const ENV = {
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   CALORIE_NINJAS_API_KEY: process.env.CALORIE_NINJAS_API_KEY || process.env.NEXT_PUBLIC_CALORIE_NINJAS_API_KEY,
   USDA_API_KEY: process.env.USDA_API_KEY || process.env.NEXT_PUBLIC_USDA_API_KEY,
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   NEXT_PUBLIC_CALORIE_NINJAS_API_KEY: process.env.NEXT_PUBLIC_CALORIE_NINJAS_API_KEY,
   NEXT_PUBLIC_USDA_API_KEY: process.env.NEXT_PUBLIC_USDA_API_KEY,
 } as const;

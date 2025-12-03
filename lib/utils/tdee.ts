@@ -154,14 +154,23 @@ export function calculateActualTDEE(
   const avgDailyIntake = Math.round(totalCaloriesConsumed / daysWithFoodData);
 
   // Calculate actual TDEE:
-  // If weight changed, the calorie balance = Weight Change * 7700
-  // Net calories = Total consumed - Workout calories burned
-  // Total expenditure = Net calories - (Weight Change * 7700)
-  // (negative weight change = loss = we spent more than we ate)
-  const calorieBalance = weightChange * CALORIES_PER_KG;
-  const netCalories = totalCaloriesConsumed - totalWorkoutCalories;
-  const totalExpenditure = netCalories - calorieBalance;
-  const actualTDEE = Math.round(totalExpenditure / daysWithFoodData);
+  // TDEE is the total calories burned per day (BMR + activity + workouts)
+  // Formula: If weight changed, the calorie deficit/surplus = Weight Change * 7700
+  // Total Expenditure = Total Consumed + Weight Loss Deficit (or - Weight Gain Surplus)
+  // When weight loss is negative, we lost weight, meaning we had a deficit
+  // Deficit = Expenditure - Intake, so: Expenditure = Intake + Deficit
+  // Weight loss deficit (positive value) = abs(weightChange) * 7700
+  const weightLossDeficit = Math.abs(weightChange) * CALORIES_PER_KG;
+  
+  // If weight decreased (weightChange < 0), we had a deficit, so expenditure > intake
+  // If weight increased (weightChange > 0), we had a surplus, so expenditure < intake
+  const totalExpenditure = weightChange < 0
+    ? totalCaloriesConsumed + weightLossDeficit  // Lost weight: expenditure = intake + deficit
+    : totalCaloriesConsumed - weightLossDeficit; // Gained weight: expenditure = intake - surplus
+  
+  // Divide by daysBetween (actual time period) not daysWithFoodData
+  // Weight change happened over the full period, so TDEE should be averaged over that period
+  const actualTDEE = Math.round(totalExpenditure / daysBetween);
 
   // Calculate formula-based TDEE for comparison
   const avgWeight = (startWeight.weight + endWeight.weight) / 2;

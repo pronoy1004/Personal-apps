@@ -13,10 +13,11 @@ import FitnessSettings from './FitnessSettings';
 import IntakeMetrics from './IntakeMetrics';
 import IntakeHistory from './IntakeHistory';
 import WorkoutHistory from './WorkoutHistory';
-import { Calendar, Settings, TrendingUp, UtensilsCrossed, Activity } from 'lucide-react';
+import FitnessChat from './FitnessChat';
+import { Calendar, Settings, TrendingUp, UtensilsCrossed, Activity, MessageCircle } from 'lucide-react';
 import type { MealType } from '@/lib/types';
 
-type Tab = 'today' | 'history' | 'projections' | 'settings';
+type Tab = 'today' | 'history' | 'projections' | 'chat' | 'settings';
 
 export default function FitnessDashboard() {
   const { data, loading, addFoodEntry, updateFoodEntryMeal } = useFitness();
@@ -139,6 +140,19 @@ export default function FitnessDashboard() {
           </div>
         </button>
         <button
+          onClick={() => setActiveTab('chat')}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+            activeTab === 'chat'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <MessageCircle size={18} />
+            Chat
+          </div>
+        </button>
+        <button
           onClick={() => setActiveTab('settings')}
           className={`px-4 py-2 font-medium transition-colors border-b-2 ${
             activeTab === 'settings'
@@ -155,7 +169,7 @@ export default function FitnessDashboard() {
 
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg z-30 safe-area-inset-bottom">
-        <div className="grid grid-cols-4 gap-1">
+        <div className="grid grid-cols-5 gap-1">
           <button
             onClick={() => setActiveTab('today')}
             className={`flex flex-col items-center justify-center py-3 px-2 min-h-[60px] transition-colors ${
@@ -188,6 +202,17 @@ export default function FitnessDashboard() {
           >
             <Activity size={20} />
             <span className="text-xs mt-1 font-medium">Projections</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('chat')}
+            className={`flex flex-col items-center justify-center py-3 px-2 min-h-[60px] transition-colors ${
+              activeTab === 'chat'
+                ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                : 'text-gray-600 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-800'
+            }`}
+          >
+            <MessageCircle size={20} />
+            <span className="text-xs mt-1 font-medium">Chat</span>
           </button>
           <button
             onClick={() => setActiveTab('settings')}
@@ -245,6 +270,10 @@ export default function FitnessDashboard() {
 
         {activeTab === 'projections' && (
           <WeightProjections />
+        )}
+
+        {activeTab === 'chat' && (
+          <FitnessChat />
         )}
 
         {activeTab === 'settings' && (
