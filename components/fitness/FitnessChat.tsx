@@ -267,7 +267,7 @@ export default function FitnessChat() {
           <div className="text-center text-gray-500 dark:text-gray-400 py-12">
             <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
             <p className="text-sm font-medium mb-2">Ask me anything about your fitness data!</p>
-            <p className="text-xs opacity-75">Examples: "Why did I gain weight?" or "What's my average protein intake?"</p>
+            <p className="text-xs opacity-75">Examples: &quot;Why did I gain weight?&quot; or &quot;What&apos;s my average protein intake?&quot;</p>
           </div>
         )}
         {messages.map((message, index) => (
