@@ -84,7 +84,7 @@ export function summarizeFitnessData(data: FitnessData, days: number = 30): stri
   if (dailyWorkouts.length > 0) {
     const totalCaloriesBurned = dailyWorkouts.reduce((sum, day) => sum + day.caloriesBurned, 0);
     const avgDailyCaloriesBurned = Math.round(totalCaloriesBurned / days);
-    const totalDuration = dailyWorkouts.reduce((sum, day) => sum + day.durationMinutes, 0);
+    const totalDuration = dailyWorkouts.reduce((sum, day) => sum + day.totalDuration, 0);
     const workoutDays = dailyWorkouts.length;
     
     workoutSummary = `Exercise: ${workoutDays} days with workouts out of ${days} days. `;

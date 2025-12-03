@@ -134,7 +134,7 @@ export default function AIInsights() {
             Get personalized analysis of your fitness data, including weight trends, nutrition patterns, workout consistency, and actionable recommendations.
           </p>
           <button
-            onClick={handleGenerate}
+            onClick={() => handleGenerate(false)}
             className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
           >
             Get AI Insights
