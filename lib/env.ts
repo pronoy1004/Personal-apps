@@ -15,6 +15,7 @@ interface EnvConfig {
   api: {
     calorieNinjasKey: string | undefined;
     usdaKey: string | undefined;
+    tmdbKey: string | undefined;
   };
 }
 
@@ -60,6 +61,15 @@ export function getOpenAIApiKey(): string | undefined {
 }
 
 /**
+ * Get TMDB API key (The Movie Database)
+ * Server-side only for security
+ * @returns API key or undefined
+ */
+export function getTMDBApiKey(): string | undefined {
+  return process.env.TMDB_API_KEY;
+}
+
+/**
  * Get all environment configuration
  * @returns Environment configuration object
  */
@@ -74,6 +84,7 @@ export function getEnvConfig(): EnvConfig {
     api: {
       calorieNinjasKey: getCalorieNinjasApiKey(),
       usdaKey: getUSDAApiKey(),
+      tmdbKey: getTMDBApiKey(),
     },
   };
 }
@@ -88,6 +99,7 @@ export const ENV = {
   CALORIE_NINJAS_API_KEY: process.env.CALORIE_NINJAS_API_KEY || process.env.NEXT_PUBLIC_CALORIE_NINJAS_API_KEY,
   USDA_API_KEY: process.env.USDA_API_KEY || process.env.NEXT_PUBLIC_USDA_API_KEY,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  TMDB_API_KEY: process.env.TMDB_API_KEY,
   NEXT_PUBLIC_CALORIE_NINJAS_API_KEY: process.env.NEXT_PUBLIC_CALORIE_NINJAS_API_KEY,
   NEXT_PUBLIC_USDA_API_KEY: process.env.NEXT_PUBLIC_USDA_API_KEY,
 } as const;

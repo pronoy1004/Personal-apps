@@ -1,12 +1,14 @@
 import { DEFAULT_COLUMNS, DEFAULT_SETTINGS } from './constants';
-import type { KanbanData, Task, Column, FitnessData, UserProfile, FavoriteFood, FoodEntry, ApiKeysData } from './types';
+import type { KanbanData, Task, Column, FitnessData, UserProfile, FavoriteFood, FoodEntry, ApiKeysData, MoviesData } from './types';
 import * as kanbanAPI from './api/kanban';
 import * as fitnessAPI from './api/fitness';
 import * as apiKeysAPI from './api/api-keys';
+import * as moviesAPI from './api/movies-client';
 
 const STORAGE_KEY = 'kanban-data';
 const FITNESS_STORAGE_KEY = 'fitness-data';
 const API_KEYS_STORAGE_KEY = 'api-keys-data';
+const MOVIES_STORAGE_KEY = 'movies-data';
 const LAST_SYNC_KEY = 'last-sync';
 const DEFAULT_API_KEYS_DATA: ApiKeysData = {
   passcodeHash: undefined,
@@ -38,7 +40,7 @@ function setLocalStorage(key: string, value: string): void {
   }
 }
 
-async function syncToAPI(key: 'kanban' | 'fitness', data: KanbanData | FitnessData): Promise<string | null> {
+async function syncToAPI(key: 'kanban' | 'fitness' | 'movies', data: KanbanData | FitnessData | MoviesData): Promise<string | null> {
   if (!isOnline()) return null;
   
   try {
@@ -49,11 +51,17 @@ async function syncToAPI(key: 'kanban' | 'fitness', data: KanbanData | FitnessDa
       if (result.lastModified) {
         setLocalStorage(`${LAST_SYNC_KEY}-kanban-lastModified`, result.lastModified);
       }
-    } else {
+    } else if (key === 'fitness') {
       result = await fitnessAPI.saveFitnessData(data as FitnessData);
       setLocalStorage(`${LAST_SYNC_KEY}-fitness`, new Date().toISOString());
       if (result.lastModified) {
         setLocalStorage(`${LAST_SYNC_KEY}-fitness-lastModified`, result.lastModified);
+      }
+    } else {
+      result = await moviesAPI.saveMoviesData(data as MoviesData);
+      setLocalStorage(`${LAST_SYNC_KEY}-movies`, new Date().toISOString());
+      if (result.lastModified) {
+        setLocalStorage(`${LAST_SYNC_KEY}-movies-lastModified`, result.lastModified);
       }
     }
     return result?.lastModified || null;
@@ -336,6 +344,76 @@ export async function saveApiKeysData(data: ApiKeysData): Promise<void> {
     console.error('Failed to save API keys data:', error);
     throw error;
   }
+}
+
+const DEFAULT_MOVIES_DATA: MoviesData = {
+  mediaEntries: [],
+  watchEntries: [],
+  preferences: {
+    genreWeights: {},
+    preferredTypes: ['movie', 'tv'],
+    lastRefined: new Date().toISOString(),
+  },
+  lastModified: new Date().toISOString(),
+};
+
+export function loadMoviesData(): MoviesData {
+  const stored = getLocalStorage(MOVIES_STORAGE_KEY);
+  if (!stored) {
+    return { ...DEFAULT_MOVIES_DATA };
+  }
+
+  try {
+    const data = JSON.parse(stored) as MoviesData;
+    return {
+      mediaEntries: data.mediaEntries || [],
+      watchEntries: data.watchEntries || [],
+      preferences: data.preferences || DEFAULT_MOVIES_DATA.preferences,
+      lastModified: data.lastModified || new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error('Error loading movies data:', error);
+    return { ...DEFAULT_MOVIES_DATA };
+  }
+}
+
+export async function loadMoviesDataAsync(): Promise<MoviesData> {
+  if (!isOnline()) {
+    return loadMoviesData();
+  }
+
+  try {
+    const dbData = await moviesAPI.fetchMoviesData();
+    const moviesData: MoviesData = {
+      mediaEntries: dbData.mediaEntries || [],
+      watchEntries: dbData.watchEntries || [],
+      preferences: dbData.preferences || DEFAULT_MOVIES_DATA.preferences,
+      lastModified: dbData.lastModified || new Date().toISOString(),
+    };
+
+    if (!moviesData.preferences) {
+      moviesData.preferences = DEFAULT_MOVIES_DATA.preferences;
+    }
+
+    setLocalStorage(MOVIES_STORAGE_KEY, JSON.stringify(moviesData));
+    if (dbData.lastModified) {
+      setLocalStorage(`${LAST_SYNC_KEY}-movies-lastModified`, dbData.lastModified);
+    }
+
+    return moviesData;
+  } catch (error) {
+    return loadMoviesData();
+  }
+}
+
+export function saveMoviesData(data: MoviesData): void {
+  try {
+    setLocalStorage(MOVIES_STORAGE_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.error('Error saving to localStorage:', error);
+  }
+
+  syncToAPI('movies', data).catch(() => {});
 }
 
 export function exportFitnessData(data: FitnessData): string {

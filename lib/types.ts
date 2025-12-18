@@ -184,3 +184,50 @@ export interface ApiKeysData {
   keys: ApiKeyEntry[];
   lastModified: string;
 }
+
+// Movies/TV Types
+export interface MediaEntry {
+  id: string; // Internal ID
+  tmdbId: number; // TMDB ID
+  type: 'movie' | 'tv';
+  title: string;
+  posterPath?: string;
+  backdropPath?: string;
+  overview: string;
+  releaseDate?: string; // for movies (ISO date)
+  firstAirDate?: string; // for TV shows (ISO date)
+  genres: string[]; // Genre names
+  rating: number; // TMDB rating (0-10)
+  popularity: number; // TMDB popularity score
+  addedAt: string; // When added to user's collection (ISO date)
+}
+
+export interface WatchEntry {
+  id: string;
+  mediaId: string; // References MediaEntry.id
+  status: 'watched' | 'watchlist';
+  rating?: 'thumbs_up' | 'thumbs_down';
+  watchedDate?: string; // ISO date string
+  addedDate: string; // ISO date string
+  notes?: string;
+}
+
+export interface StreamingProvider {
+  providerId: number;
+  providerName: string;
+  logoPath?: string;
+  type: 'flatrate' | 'rent' | 'buy';
+}
+
+export interface UserPreferences {
+  genreWeights: Record<string, number>; // genre name -> weight (refined by ratings)
+  preferredTypes: ('movie' | 'tv')[];
+  lastRefined: string; // ISO timestamp
+}
+
+export interface MoviesData {
+  mediaEntries: MediaEntry[];
+  watchEntries: WatchEntry[];
+  preferences: UserPreferences;
+  lastModified: string;
+}

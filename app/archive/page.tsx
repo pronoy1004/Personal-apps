@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { useKanban } from '@/hooks/useKanban';
 import { formatDate } from '@/lib/utils';
 import { PRIORITY_COLORS, PRIORITY_LABELS } from '@/lib/constants';
-import { ArrowLeft, Trash2, RotateCcw } from 'lucide-react';
-import Link from 'next/link';
+import { Trash2, RotateCcw } from 'lucide-react';
 import TaskModal from '@/components/tasks/TaskModal';
 import { Task } from '@/lib/types';
+import AppLayout from '@/components/layout/AppLayout';
 
 export default function ArchivePage() {
   const { data, restoreTask, deleteTask } = useKanban();
@@ -16,9 +16,11 @@ export default function ArchivePage() {
 
   if (!data) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-gray-500 dark:text-gray-400">Loading...</div>
-      </div>
+      <AppLayout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+        </div>
+      </AppLayout>
     );
   }
 
@@ -35,31 +37,16 @@ export default function ArchivePage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <AppLayout>
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
-            </Link>
-            <img 
-              src="/logo.svg" 
-              alt="Logo" 
-              className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0"
-              width="40"
-              height="40"
-            />
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              Archived Tasks
-            </h1>
-            <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full">
-              {archivedTasks.length} archived
-            </span>
-          </div>
+        <div className="flex items-center gap-4 mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            Archived Tasks
+          </h1>
+          <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full">
+            {archivedTasks.length} archived
+          </span>
         </div>
 
         {/* Archived tasks list */}
@@ -145,6 +132,6 @@ export default function ArchivePage() {
 
       {/* Task Modal */}
       <TaskModal task={selectedTask} isOpen={isModalOpen} onClose={handleCloseModal} />
-    </main>
+    </AppLayout>
   );
 }

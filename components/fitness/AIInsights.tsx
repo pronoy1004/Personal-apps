@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { generateInsights } from '@/lib/api/ai-insights';
+import { useFitness } from '@/hooks/useFitness';
 import { Sparkles, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 
 const CACHE_KEY = 'fitness-ai-insights';
@@ -44,9 +45,39 @@ function setCachedInsights(insights: string): void {
 }
 
 export default function AIInsights() {
+  const { data } = useFitness();
   const [insights, setInsights] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Calculate available data days dynamically
+  const calculateAvailableDays = useCallback((): number | undefined => {
+    if (!data) return undefined;
+
+    const now = new Date();
+    let oldestDate: Date | null = null;
+
+    // Find oldest entry from all data types
+    if (data.foodEntries.length > 0) {
+      const oldestFood = new Date(Math.min(...data.foodEntries.map(e => new Date(e.timestamp).getTime())));
+      if (!oldestDate || oldestFood < oldestDate) oldestDate = oldestFood;
+    }
+    if (data.weightEntries.length > 0) {
+      const oldestWeight = new Date(Math.min(...data.weightEntries.map(e => new Date(e.date).getTime())));
+      if (!oldestDate || oldestWeight < oldestDate) oldestDate = oldestWeight;
+    }
+    if (data.workoutEntries.length > 0) {
+      const oldestWorkout = new Date(Math.min(...data.workoutEntries.map(e => new Date(e.date).getTime())));
+      if (!oldestDate || oldestWorkout < oldestDate) oldestDate = oldestWorkout;
+    }
+
+    if (!oldestDate) return undefined;
+
+    // Calculate days between oldest and now
+    const days = Math.ceil((now.getTime() - oldestDate.getTime()) / (24 * 60 * 60 * 1000));
+    // Use minimum of available days and 30 for reasonable analysis
+    return Math.min(Math.max(days, 1), 30);
+  }, [data]);
 
   const handleGenerate = useCallback(async (forceRefresh = false) => {
     // Check cache first if not forcing refresh
@@ -62,7 +93,9 @@ export default function AIInsights() {
     setError(null);
 
     try {
-      const generatedInsights = await generateInsights();
+      // Calculate available days dynamically
+      const availableDays = calculateAvailableDays();
+      const generatedInsights = await generateInsights(availableDays);
       setInsights(generatedInsights);
       setCachedInsights(generatedInsights);
     } catch (err: any) {
@@ -70,7 +103,7 @@ export default function AIInsights() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [calculateAvailableDays]);
 
   const handleRefresh = useCallback(() => {
     localStorage.removeItem(CACHE_KEY);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useFitness } from '@/hooks/useFitness';
-import { calculateTDEE, calculateDailyBalance } from '@/lib/utils/tdee';
+import { calculateTDEE, calculateActualTDEE, calculateDailyBalance } from '@/lib/utils/tdee';
 import { calculateMacroDistribution } from '@/lib/utils/macros';
 import { getStartOfDay, isSameDay } from '@/lib/utils/date';
 import { Target, TrendingDown, TrendingUp, Minus } from 'lucide-react';
@@ -40,13 +40,31 @@ export default function DailySummary() {
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   );
 
-  const tdee = calculateTDEE(
+  // Calculate formula-based TDEE (fallback)
+  const formulaTDEE = calculateTDEE(
     currentWeight,
     data.userProfile.height,
     data.userProfile.age,
     data.userProfile.gender,
     data.userProfile.activityLevel
   );
+
+  // Try to calculate actual TDEE from workouts and weight changes
+  // This uses real data including workout calories
+  const actualTDEEResult = calculateActualTDEE(
+    data.weightEntries,
+    data.foodEntries,
+    data.userProfile.height,
+    data.userProfile.age,
+    data.userProfile.gender,
+    data.userProfile.activityLevel,
+    14, // 14-day analysis window
+    data.workoutEntries
+  );
+
+  // Use actual TDEE if available, otherwise use formula TDEE
+  const tdee = actualTDEEResult?.actualTDEE || formulaTDEE;
+  const hasActualTDEE = actualTDEEResult !== null;
 
   // Calculate balance
   const balance = calculateDailyBalance(totalMacros.calories, tdee);
@@ -137,11 +155,25 @@ export default function DailySummary() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600 dark:text-gray-400">TDEE</span>
-            <span className="font-semibold text-gray-900 dark:text-gray-100">{tdee} cal</span>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-gray-900 dark:text-gray-100">{tdee} cal</span>
+              {hasActualTDEE && actualTDEEResult && (
+                <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full">
+                  Workout-adjusted
+                </span>
+              )}
+            </div>
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Based on {data.userProfile.activityLevel.replace('_', ' ')} activity level
+            {hasActualTDEE && actualTDEEResult
+              ? `Calculated from ${actualTDEEResult.daysAnalyzed} days of data (${actualTDEEResult.confidence} confidence)`
+              : `Based on ${data.userProfile.activityLevel.replace('_', ' ')} activity level`}
           </div>
+          {hasActualTDEE && actualTDEEResult && actualTDEEResult.formulaTDEE && (
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Formula estimate: {actualTDEEResult.formulaTDEE} cal
+            </div>
+          )}
           <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-600">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Daily Balance</span>
             <div className="flex items-center gap-2">

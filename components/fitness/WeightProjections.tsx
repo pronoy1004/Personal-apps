@@ -6,7 +6,6 @@ import { TrendingDown, Calendar, Zap, Target, AlertTriangle, CheckCircle } from 
 import { format, addDays, subDays, differenceInDays } from 'date-fns';
 import { getStartOfDay } from '@/lib/utils/date';
 import type { FoodEntry } from '@/lib/types';
-import AIInsights from './AIInsights';
 
 export default function WeightProjections() {
   const { data, getCurrentWeight } = useFitness();
@@ -468,11 +467,6 @@ export default function WeightProjections() {
           <li>• 1 kg of body weight change ≈ 7,700 calories</li>
           <li>• Projections improve as you log more consistently</li>
         </ul>
-      </div>
-
-      {/* AI Insights Section */}
-      <div className="mt-6">
-        <AIInsights />
       </div>
     </div>
   );

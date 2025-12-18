@@ -8,7 +8,7 @@ import ThemeToggle from '@/components/ui/ThemeToggle';
 import ExportImport from '@/components/ui/ExportImport';
 import ColumnManager from '@/components/kanban/ColumnManager';
 import { FilterOptions } from '@/lib/types';
-import { Filter, Archive, BarChart3, Settings, Activity, Menu, X, KeyRound } from 'lucide-react';
+import { Filter, Archive, BarChart3, Settings, Activity, Menu, X, KeyRound, Film } from 'lucide-react';
 
 interface HeaderProps {
   searchValue: string;
@@ -70,7 +70,7 @@ export default function Header({
             height="40"
           />
           <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent truncate">
-            Pronoy&apos;s To-Do List
+            Personal Hub
           </h1>
         </div>
         
@@ -84,6 +84,13 @@ export default function Header({
             title="Fitness & Nutrition"
           >
             <Activity size={20} />
+          </Link>
+          <Link
+            href="/movies"
+            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600 rounded-lg transition-colors"
+            title="Movies & TV Shows"
+          >
+            <Film size={20} />
           </Link>
           <Link
             href="/api-keys"
@@ -192,6 +199,14 @@ export default function Header({
             >
               <Activity size={20} />
               <span>Fitness</span>
+            </Link>
+            <Link
+              href="/movies"
+              className="flex items-center gap-2 px-4 py-3 min-h-[44px] bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg transition-colors active:bg-gray-300 dark:active:bg-gray-600"
+              onClick={() => setShowMobileMenu(false)}
+            >
+              <Film size={20} />
+              <span>Movies</span>
             </Link>
             <Link
               href="/stats"

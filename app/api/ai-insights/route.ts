@@ -54,7 +54,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const summary = summarizeFitnessData(fitnessData, 30);
+    // Get days parameter from request body, default to calculating from available data
+    let days: number | undefined;
+    try {
+      const body = await request.json();
+      days = body.days;
+    } catch {
+      // No body or invalid JSON, will calculate dynamically
+    }
+
+    // Calculate available data range if days not provided
+    if (!days || days <= 0) {
+      const now = new Date();
+      let oldestDate = now;
+      
+      // Find oldest entry from all data types
+      if (fitnessData.foodEntries.length > 0) {
+        const oldestFood = new Date(Math.min(...fitnessData.foodEntries.map(e => new Date(e.timestamp).getTime())));
+        if (oldestFood < oldestDate) oldestDate = oldestFood;
+      }
+      if (fitnessData.weightEntries.length > 0) {
+        const oldestWeight = new Date(Math.min(...fitnessData.weightEntries.map(e => new Date(e.date).getTime())));
+        if (oldestWeight < oldestDate) oldestDate = oldestWeight;
+      }
+      if (fitnessData.workoutEntries.length > 0) {
+        const oldestWorkout = new Date(Math.min(...fitnessData.workoutEntries.map(e => new Date(e.date).getTime())));
+        if (oldestWorkout < oldestDate) oldestDate = oldestWorkout;
+      }
+      
+      // Calculate days between oldest and now
+      if (oldestDate < now) {
+        days = Math.ceil((now.getTime() - oldestDate.getTime()) / (24 * 60 * 60 * 1000));
+        // Use minimum of available days and 30 for reasonable analysis
+        days = Math.min(Math.max(days, 1), 30);
+      } else {
+        days = 30; // Fallback if no data or invalid dates
+      }
+    }
+
+    const summary = summarizeFitnessData(fitnessData, days);
 
     const openai = new OpenAI({ apiKey });
 

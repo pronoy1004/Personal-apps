@@ -1,7 +1,7 @@
 {
-  "name": "Pronoy's Kanban & Fitness Tracker",
-  "short_name": "Kanban Fitness",
-  "description": "Personal task management and fitness tracking app",
+  "name": "Personal Hub",
+  "short_name": "Personal Hub",
+  "description": "Your all-in-one personal management platform for tasks, fitness, movies, and more",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

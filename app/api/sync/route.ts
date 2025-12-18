@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import KanbanDataModel from '@/lib/models/KanbanData';
 import FitnessDataModel from '@/lib/models/FitnessData';
+import MoviesDataModel from '@/lib/models/MoviesData';
 
 const USER_ID = 'default-user';
 
@@ -13,11 +14,12 @@ export async function POST(request: NextRequest) {
     }
     
     const body = await request.json();
-    const { kanbanLastModified, fitnessLastModified } = body;
+    const { kanbanLastModified, fitnessLastModified, moviesLastModified } = body;
 
     const results: {
       kanban?: { lastModified: string; needsUpdate: boolean };
       fitness?: { lastModified: string; needsUpdate: boolean };
+      movies?: { lastModified: string; needsUpdate: boolean };
     } = {};
 
     if (kanbanLastModified !== undefined) {
@@ -39,6 +41,19 @@ export async function POST(request: NextRequest) {
       const clientLastModified = fitnessLastModified ? new Date(fitnessLastModified).toISOString() : null;
       
       results.fitness = {
+        lastModified: serverLastModified || new Date().toISOString(),
+        needsUpdate: !serverLastModified || 
+          !clientLastModified || 
+          new Date(serverLastModified) > new Date(clientLastModified),
+      };
+    }
+
+    if (moviesLastModified !== undefined) {
+      const moviesData = await MoviesDataModel.findOne({ userId: USER_ID });
+      const serverLastModified = moviesData?.lastModified?.toISOString();
+      const clientLastModified = moviesLastModified ? new Date(moviesLastModified).toISOString() : null;
+      
+      results.movies = {
         lastModified: serverLastModified || new Date().toISOString(),
         needsUpdate: !serverLastModified || 
           !clientLastModified || 

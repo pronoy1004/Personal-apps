@@ -10,14 +10,16 @@ export interface AIInsightsError {
 
 /**
  * Generate AI insights from fitness data
+ * @param days - Optional number of days to analyze. If not provided, will be calculated from available data
  */
-export async function generateInsights(): Promise<string> {
+export async function generateInsights(days?: number): Promise<string> {
   try {
     const response = await fetch(API_BASE, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: days ? JSON.stringify({ days }) : undefined,
     });
 
     if (!response.ok) {

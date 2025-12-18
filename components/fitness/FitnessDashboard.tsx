@@ -14,10 +14,11 @@ import IntakeMetrics from './IntakeMetrics';
 import IntakeHistory from './IntakeHistory';
 import WorkoutHistory from './WorkoutHistory';
 import FitnessChat from './FitnessChat';
-import { Calendar, Settings, TrendingUp, UtensilsCrossed, Activity, MessageCircle } from 'lucide-react';
+import AIInsights from './AIInsights';
+import { Calendar, Settings, TrendingUp, UtensilsCrossed, Activity, MessageCircle, Sparkles } from 'lucide-react';
 import type { MealType } from '@/lib/types';
 
-type Tab = 'today' | 'history' | 'projections' | 'chat' | 'settings';
+type Tab = 'today' | 'history' | 'projections' | 'insights' | 'chat' | 'settings';
 
 export default function FitnessDashboard() {
   const { data, loading, addFoodEntry, updateFoodEntryMeal } = useFitness();
@@ -140,6 +141,19 @@ export default function FitnessDashboard() {
           </div>
         </button>
         <button
+          onClick={() => setActiveTab('insights')}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+            activeTab === 'insights'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Sparkles size={18} />
+            Insights
+          </div>
+        </button>
+        <button
           onClick={() => setActiveTab('chat')}
           className={`px-4 py-2 font-medium transition-colors border-b-2 ${
             activeTab === 'chat'
@@ -168,11 +182,11 @@ export default function FitnessDashboard() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg z-30 safe-area-inset-bottom">
-        <div className="grid grid-cols-5 gap-1">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg z-30 safe-area-inset-bottom overflow-x-auto">
+        <div className="flex">
           <button
             onClick={() => setActiveTab('today')}
-            className={`flex flex-col items-center justify-center py-3 px-2 min-h-[60px] transition-colors ${
+            className={`flex-shrink-0 flex flex-col items-center justify-center py-3 px-3 min-h-[60px] min-w-[70px] transition-colors ${
               activeTab === 'today'
                 ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
                 : 'text-gray-600 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-800'
@@ -183,7 +197,7 @@ export default function FitnessDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`flex flex-col items-center justify-center py-3 px-2 min-h-[60px] transition-colors ${
+            className={`flex-shrink-0 flex flex-col items-center justify-center py-3 px-3 min-h-[60px] min-w-[70px] transition-colors ${
               activeTab === 'history'
                 ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
                 : 'text-gray-600 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-800'
@@ -194,18 +208,29 @@ export default function FitnessDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('projections')}
-            className={`flex flex-col items-center justify-center py-3 px-2 min-h-[60px] transition-colors ${
+            className={`flex-shrink-0 flex flex-col items-center justify-center py-3 px-3 min-h-[60px] min-w-[70px] transition-colors ${
               activeTab === 'projections'
                 ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
                 : 'text-gray-600 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-800'
             }`}
           >
             <Activity size={20} />
-            <span className="text-xs mt-1 font-medium">Projections</span>
+            <span className="text-xs mt-1 font-medium">Proj</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('insights')}
+            className={`flex-shrink-0 flex flex-col items-center justify-center py-3 px-3 min-h-[60px] min-w-[70px] transition-colors ${
+              activeTab === 'insights'
+                ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                : 'text-gray-600 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-800'
+            }`}
+          >
+            <Sparkles size={20} />
+            <span className="text-xs mt-1 font-medium">AI</span>
           </button>
           <button
             onClick={() => setActiveTab('chat')}
-            className={`flex flex-col items-center justify-center py-3 px-2 min-h-[60px] transition-colors ${
+            className={`flex-shrink-0 flex flex-col items-center justify-center py-3 px-3 min-h-[60px] min-w-[70px] transition-colors ${
               activeTab === 'chat'
                 ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
                 : 'text-gray-600 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-800'
@@ -216,7 +241,7 @@ export default function FitnessDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('settings')}
-            className={`flex flex-col items-center justify-center py-3 px-2 min-h-[60px] transition-colors ${
+            className={`flex-shrink-0 flex flex-col items-center justify-center py-3 px-3 min-h-[60px] min-w-[70px] transition-colors ${
               activeTab === 'settings'
                 ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
                 : 'text-gray-600 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-800'
@@ -270,6 +295,10 @@ export default function FitnessDashboard() {
 
         {activeTab === 'projections' && (
           <WeightProjections />
+        )}
+
+        {activeTab === 'insights' && (
+          <AIInsights />
         )}
 
         {activeTab === 'chat' && (

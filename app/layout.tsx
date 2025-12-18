@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Pronoy's To-Do List",
-  description: "Personal task management list",
+  title: "Personal Hub",
+  description: "Personal Hub - Your all-in-one personal management platform for tasks, fitness, movies, and more",
   viewport: "width=device-width, initial-scale=1, maximum-scale=5",
 };
 
@@ -22,7 +22,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#3b82f6" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Kanban Fitness" />
+        <meta name="apple-mobile-web-app-title" content="Personal Hub" />
         <script
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
