@@ -82,7 +82,6 @@ export function MoviesProvider({ children }: { children: ReactNode }) {
 
   const addToWatchlist = useCallback((mediaId: string) => {
     updateData((data) => {
-      // Check if already in watchlist
       const existing = data.watchEntries.find(
         (e) => e.mediaId === mediaId && e.status === 'watchlist'
       );
