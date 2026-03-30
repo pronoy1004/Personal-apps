@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useMovies } from '@/contexts/MoviesContext';
 import MediaCard from './MediaCard';
 import { List, Film } from 'lucide-react';
-import type { MediaEntry } from '@/lib/types';
+import type { MediaEntry, WatchEntry } from '@/lib/types';
 
 export default function Watchlist() {
   const { data, getWatchlist, removeFromList, addToWatched } = useMovies();
@@ -16,7 +16,7 @@ export default function Watchlist() {
         const media = data?.mediaEntries.find((m) => m.id === entry.mediaId);
         return media ? { entry, media } : null;
       })
-      .filter((item): item is { entry: typeof watchlist[0]['entry']; media: MediaEntry } => item !== null)
+      .filter((item): item is { entry: WatchEntry; media: MediaEntry } => item !== null)
       .sort((a, b) => new Date(b.entry.addedDate).getTime() - new Date(a.entry.addedDate).getTime());
   }, [data, getWatchlist]);
 

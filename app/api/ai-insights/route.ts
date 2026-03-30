@@ -33,6 +33,8 @@ async function getFitnessData(): Promise<FitnessData | null> {
       dailyCalorieGoal: 2400,
     },
     settings: fitnessData.settings || {},
+    waterEntries: fitnessData.waterEntries || [],
+    mealTemplates: fitnessData.mealTemplates || [],
   };
 }
 

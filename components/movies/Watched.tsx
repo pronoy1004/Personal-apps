@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { useMovies } from '@/contexts/MoviesContext';
 import MediaCard from './MediaCard';
 import { CheckCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
-import type { MediaEntry } from '@/lib/types';
+import type { MediaEntry, WatchEntry } from '@/lib/types';
 
 type RatingFilter = 'all' | 'thumbs_up' | 'thumbs_down' | 'no_rating';
 
@@ -29,7 +29,7 @@ export default function Watched() {
         const media = data?.mediaEntries.find((m) => m.id === entry.mediaId);
         return media ? { entry, media } : null;
       })
-      .filter((item): item is { entry: typeof watched[0]['entry']; media: MediaEntry } => item !== null)
+      .filter((item): item is { entry: WatchEntry; media: MediaEntry } => item !== null)
       .sort((a, b) => {
         const dateA = a.entry.watchedDate || a.entry.addedDate;
         const dateB = b.entry.watchedDate || b.entry.addedDate;

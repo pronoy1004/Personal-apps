@@ -2,7 +2,7 @@ import type { MoviesData } from '@/lib/types';
 
 const API_BASE = '/api/movies';
 
-export interface MoviesDataResponse extends MoviesData {
+export interface MoviesDataResponse extends Omit<MoviesData, 'lastModified'> {
   lastModified?: string;
 }
 

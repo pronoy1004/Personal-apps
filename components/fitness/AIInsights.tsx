@@ -59,16 +59,16 @@ export default function AIInsights() {
 
     // Find oldest entry from all data types
     if (data.foodEntries.length > 0) {
-      const oldestFood = new Date(Math.min(...data.foodEntries.map(e => new Date(e.timestamp).getTime())));
-      if (!oldestDate || oldestFood < oldestDate) oldestDate = oldestFood;
+      const oldestFood = new Date(Math.min(...data.foodEntries.map((e) => new Date(e.timestamp).getTime()) as number[]));
+      if (!oldestDate || oldestFood.getTime() < oldestDate.getTime()) oldestDate = oldestFood;
     }
     if (data.weightEntries.length > 0) {
-      const oldestWeight = new Date(Math.min(...data.weightEntries.map(e => new Date(e.date).getTime())));
-      if (!oldestDate || oldestWeight < oldestDate) oldestDate = oldestWeight;
+      const oldestWeight = new Date(Math.min(...data.weightEntries.map((e) => new Date(e.date).getTime()) as number[]));
+      if (!oldestDate || oldestWeight.getTime() < oldestDate.getTime()) oldestDate = oldestWeight;
     }
     if (data.workoutEntries.length > 0) {
-      const oldestWorkout = new Date(Math.min(...data.workoutEntries.map(e => new Date(e.date).getTime())));
-      if (!oldestDate || oldestWorkout < oldestDate) oldestDate = oldestWorkout;
+      const oldestWorkout = new Date(Math.min(...data.workoutEntries.map((e) => new Date(e.date).getTime()) as number[]));
+      if (!oldestDate || oldestWorkout.getTime() < oldestDate.getTime()) oldestDate = oldestWorkout;
     }
 
     if (!oldestDate) return undefined;

@@ -24,7 +24,7 @@ interface SearchResult {
 }
 
 export default function MovieSearch() {
-  const { addMediaEntry, addToWatchlist, addToWatched, getWatchEntryByMediaId } = useMovies();
+  const { data, addMediaEntry, addToWatchlist, addToWatched, getWatchEntryByMediaId } = useMovies();
   const [query, setQuery] = useState('');
   const [type, setType] = useState<'movie' | 'tv' | 'both'>('both');
   const [results, setResults] = useState<SearchResult[]>([]);
