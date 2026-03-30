@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { loadFitnessData, loadFitnessDataAsync, saveFitnessData } from '@/lib/storage';
-import type { FitnessData, WeightEntry, FoodEntry, WorkoutEntry, UserProfile, FavoriteFood, MealType } from '@/lib/types';
+import type { FitnessData, WeightEntry, FoodEntry, WorkoutEntry, UserProfile, FavoriteFood, MealType, WaterEntry, MealTemplate } from '@/lib/types';
 import { generateId } from '@/lib/utils';
 import { calculateTDEE, intakeFromGoal } from '@/lib/utils/tdee';
 import { format } from 'date-fns';
@@ -26,6 +26,17 @@ interface FitnessContextType {
   addFavoriteFood: (food: Omit<FavoriteFood, 'id' | 'createdAt'>) => void;
   removeFavoriteFood: (id: string) => void;
   getFavoriteFoods: () => FavoriteFood[];
+  // Settings
+  updateSettings: (settings: Partial<FitnessData['settings']>) => void;
+  // Water tracking
+  addWaterEntry: (amount: number) => void;
+  removeWaterEntry: (id: string) => void;
+  getTodayWaterEntries: () => WaterEntry[];
+  getTodayWaterTotal: () => number;
+  // Meal templates
+  saveMealTemplate: (name: string, foodEntryIds: string[]) => void;
+  deleteMealTemplate: (id: string) => void;
+  applyMealTemplate: (templateId: string, mealType: MealType) => void;
 }
 
 const FitnessContext = createContext<FitnessContextType | undefined>(undefined);
@@ -153,6 +164,9 @@ export function FitnessProvider({ children }: { children: ReactNode }) {
         protein: Math.round((entry.macros.protein * ratio) * 10) / 10,
         carbs: Math.round((entry.macros.carbs * ratio) * 10) / 10,
         fat: Math.round((entry.macros.fat * ratio) * 10) / 10,
+        ...(entry.macros.fiber != null && { fiber: Math.round(entry.macros.fiber * ratio * 10) / 10 }),
+        ...(entry.macros.sugar != null && { sugar: Math.round(entry.macros.sugar * ratio * 10) / 10 }),
+        ...(entry.macros.sodium != null && { sodium: Math.round(entry.macros.sodium * ratio) }),
       };
 
       return {
@@ -217,6 +231,106 @@ export function FitnessProvider({ children }: { children: ReactNode }) {
     if (!data) return [];
     return data.favoriteFoods;
   }, [data]);
+
+  const updateSettings = useCallback((settings: Partial<FitnessData['settings']>) => {
+    updateData((data) => ({
+      ...data,
+      settings: { ...data.settings, ...settings },
+    }));
+  }, [updateData]);
+
+  // Water tracking
+  const addWaterEntry = useCallback((amount: number) => {
+    updateData((data) => {
+      const newEntry: WaterEntry = {
+        id: generateId(),
+        amount,
+        timestamp: new Date().toISOString(),
+      };
+      return {
+        ...data,
+        waterEntries: [...(data.waterEntries || []), newEntry],
+      };
+    });
+  }, [updateData]);
+
+  const removeWaterEntry = useCallback((id: string) => {
+    updateData((data) => ({
+      ...data,
+      waterEntries: (data.waterEntries || []).filter((e) => e.id !== id),
+    }));
+  }, [updateData]);
+
+  const getTodayWaterEntries = useCallback(() => {
+    if (!data) return [];
+    const today = getStartOfDay(new Date());
+    return (data.waterEntries || []).filter((e) => isSameDay(e.timestamp, today));
+  }, [data]);
+
+  const getTodayWaterTotal = useCallback(() => {
+    if (!data) return 0;
+    const today = getStartOfDay(new Date());
+    return (data.waterEntries || [])
+      .filter((e) => isSameDay(e.timestamp, today))
+      .reduce((sum, e) => sum + e.amount, 0);
+  }, [data]);
+
+  // Meal templates
+  const saveMealTemplate = useCallback((name: string, foodEntryIds: string[]) => {
+    updateData((data) => {
+      const today = getStartOfDay(new Date());
+      const todayEntries = data.foodEntries.filter((e) => isSameDay(e.timestamp, today));
+      const selectedEntries = todayEntries.filter((e) => foodEntryIds.includes(e.id));
+
+      if (selectedEntries.length === 0) return data;
+
+      const template: MealTemplate = {
+        id: generateId(),
+        name,
+        foods: selectedEntries.map((e) => ({
+          name: e.name,
+          quantity: e.quantity,
+          unit: e.unit,
+          macros: e.macros,
+        })),
+        createdAt: new Date().toISOString(),
+      };
+
+      return {
+        ...data,
+        mealTemplates: [...(data.mealTemplates || []), template],
+      };
+    });
+  }, [updateData]);
+
+  const deleteMealTemplate = useCallback((id: string) => {
+    updateData((data) => ({
+      ...data,
+      mealTemplates: (data.mealTemplates || []).filter((t) => t.id !== id),
+    }));
+  }, [updateData]);
+
+  const applyMealTemplate = useCallback((templateId: string, mealType: MealType) => {
+    updateData((data) => {
+      const template = (data.mealTemplates || []).find((t) => t.id === templateId);
+      if (!template) return data;
+
+      const newEntries = template.foods.map((food) => ({
+        id: generateId(),
+        name: food.name,
+        mealType,
+        quantity: food.quantity,
+        unit: food.unit,
+        macros: food.macros,
+        timestamp: new Date().toISOString(),
+      }));
+
+      return {
+        ...data,
+        foodEntries: [...data.foodEntries, ...newEntries],
+      };
+    });
+  }, [updateData]);
 
   const addWorkoutEntry = useCallback((entry: Omit<WorkoutEntry, 'id' | 'timestamp'>) => {
     updateData((data) => {
@@ -311,6 +425,14 @@ export function FitnessProvider({ children }: { children: ReactNode }) {
     addFavoriteFood,
     removeFavoriteFood,
     getFavoriteFoods,
+    updateSettings,
+    addWaterEntry,
+    removeWaterEntry,
+    getTodayWaterEntries,
+    getTodayWaterTotal,
+    saveMealTemplate,
+    deleteMealTemplate,
+    applyMealTemplate,
   };
 
   return <FitnessContext.Provider value={value}>{children}</FitnessContext.Provider>;

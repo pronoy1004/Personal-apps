@@ -166,7 +166,9 @@ export default function FoodSearch({ onSelect, onClose }: FoodSearchProps) {
                 >
                   <div className="font-medium text-gray-900 dark:text-gray-100">{food.name}</div>
                   <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {food.calories} cal • {food.protein}g protein • {food.carbs}g carbs • {food.fat}g fat
+                    {food.calories} cal • {food.protein}g P • {food.carbs}g C • {food.fat}g F
+                    {food.fiber != null && ` • ${food.fiber}g fiber`}
+                    {food.sodium != null && ` • ${food.sodium}mg Na`}
                     {food.servingSize && ` (per ${food.servingSize})`}
                     {food.source && (
                       <span className="ml-2 text-xs text-gray-500 dark:text-gray-500">• {food.source}</span>

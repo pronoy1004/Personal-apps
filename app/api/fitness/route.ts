@@ -5,59 +5,40 @@ import type { FitnessData } from '@/lib/types';
 
 const USER_ID = 'default-user';
 
+const DEFAULT_PROFILE = {
+  height: 183,
+  age: 27,
+  gender: 'male',
+  activityLevel: 'very_active',
+  baseTDEE: 3400,
+  dailyCalorieGoal: 2400,
+  defaultWorkoutCalories: 1100,
+  macroGoals: { protein: 200, carbs: 0, fat: 0 },
+};
+
+const EMPTY_DATA = {
+  weightEntries: [],
+  foodEntries: [],
+  workoutEntries: [],
+  favoriteFoods: [],
+  waterEntries: [],
+  mealTemplates: [],
+  userProfile: DEFAULT_PROFILE,
+  settings: {},
+  lastModified: new Date().toISOString(),
+};
+
 export async function GET(request: NextRequest) {
   try {
     const dbConnection = await connectDB();
     if (!dbConnection) {
-      return NextResponse.json({
-        weightEntries: [],
-        foodEntries: [],
-        workoutEntries: [],
-        favoriteFoods: [],
-        userProfile: {
-          height: 183,
-          age: 27,
-          gender: 'male',
-          activityLevel: 'very_active',
-          baseTDEE: 3400,
-          dailyCalorieGoal: 2400,
-          defaultWorkoutCalories: 1100,
-          macroGoals: {
-            protein: 200,
-            carbs: 0,
-            fat: 0,
-          },
-        },
-        settings: {},
-        lastModified: new Date().toISOString(),
-      });
+      return NextResponse.json(EMPTY_DATA);
     }
-    
-    let fitnessData = await FitnessDataModel.findOne({ userId: USER_ID });
+
+    const fitnessData = await FitnessDataModel.findOne({ userId: USER_ID });
 
     if (!fitnessData) {
-      return NextResponse.json({
-        weightEntries: [],
-        foodEntries: [],
-        workoutEntries: [],
-        favoriteFoods: [],
-        userProfile: {
-          height: 183,
-          age: 27,
-          gender: 'male',
-          activityLevel: 'very_active',
-          baseTDEE: 3400,
-          dailyCalorieGoal: 2400,
-          defaultWorkoutCalories: 1100,
-          macroGoals: {
-            protein: 200,
-            carbs: 0,
-            fat: 0,
-          },
-        },
-        settings: {},
-        lastModified: new Date().toISOString(),
-      });
+      return NextResponse.json(EMPTY_DATA);
     }
 
     const data = {
@@ -65,12 +46,9 @@ export async function GET(request: NextRequest) {
       foodEntries: fitnessData.foodEntries || [],
       workoutEntries: fitnessData.workoutEntries || [],
       favoriteFoods: fitnessData.favoriteFoods || [],
-      userProfile: fitnessData.userProfile || {
-        height: 183,
-        age: 27,
-        gender: 'male',
-        activityLevel: 'very_active',
-      },
+      waterEntries: (fitnessData as any).waterEntries || [],
+      mealTemplates: (fitnessData as any).mealTemplates || [],
+      userProfile: fitnessData.userProfile || DEFAULT_PROFILE,
       settings: fitnessData.settings || {},
       lastModified: fitnessData.lastModified?.toISOString() || new Date().toISOString(),
     };
@@ -94,20 +72,17 @@ export async function POST(request: NextRequest) {
         lastModified: new Date().toISOString(),
       });
     }
-    
+
     const body: FitnessData & { lastModified?: string } = await request.json();
-    
+
     const updateData = {
       weightEntries: body.weightEntries || [],
       foodEntries: body.foodEntries || [],
       workoutEntries: body.workoutEntries || [],
       favoriteFoods: body.favoriteFoods || [],
-      userProfile: body.userProfile || {
-        height: 183,
-        age: 27,
-        gender: 'male',
-        activityLevel: 'very_active',
-      },
+      waterEntries: body.waterEntries || [],
+      mealTemplates: body.mealTemplates || [],
+      userProfile: body.userProfile || DEFAULT_PROFILE,
       settings: body.settings || {},
       lastModified: new Date(),
     };
@@ -134,4 +109,3 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   return POST(request);
 }
-

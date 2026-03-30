@@ -59,6 +59,9 @@ export default function FoodLogger({ activeDragId }: FoodLoggerProps = {}) {
         protein: food.protein,
         carbs: food.carbs,
         fat: food.fat,
+        ...(food.fiber != null && { fiber: food.fiber }),
+        ...(food.sugar != null && { sugar: food.sugar }),
+        ...(food.sodium != null && { sodium: food.sodium }),
       },
       unit: food.unit || 'g',
     });

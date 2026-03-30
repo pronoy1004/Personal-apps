@@ -10,6 +10,9 @@ const MacrosSchema = new Schema({
   protein: { type: Number, required: true },
   carbs: { type: Number, required: true },
   fat: { type: Number, required: true },
+  fiber: Number,
+  sugar: Number,
+  sodium: Number,
 }, { _id: false });
 
 const WeightEntrySchema = new Schema({
@@ -23,10 +26,10 @@ const WeightEntrySchema = new Schema({
 const FoodEntrySchema = new Schema({
   id: { type: String, required: true, unique: true },
   name: { type: String, required: true },
-  mealType: { 
-    type: String, 
+  mealType: {
+    type: String,
     enum: ['breakfast', 'lunch', 'dinner', 'snack'],
-    required: true 
+    required: true
   },
   quantity: { type: Number, required: true },
   unit: { type: String, required: true },
@@ -43,6 +46,14 @@ const FavoriteFoodSchema = new Schema({
   createdAt: { type: String, required: true },
 }, { _id: false });
 
+const ExerciseSetSchema = new Schema({
+  exerciseName: { type: String, required: true },
+  sets: { type: Number, required: true },
+  reps: { type: Number, required: true },
+  weightKg: Number,
+  notes: String,
+}, { _id: false });
+
 const WorkoutEntrySchema = new Schema({
   id: { type: String, required: true, unique: true },
   type: { type: String, required: true },
@@ -50,6 +61,28 @@ const WorkoutEntrySchema = new Schema({
   caloriesBurned: { type: Number, required: true },
   date: { type: String, required: true, index: true },
   timestamp: { type: String, required: true },
+  exercises: [ExerciseSetSchema],
+  notes: String,
+}, { _id: false });
+
+const WaterEntrySchema = new Schema({
+  id: { type: String, required: true },
+  amount: { type: Number, required: true }, // ml
+  timestamp: { type: String, required: true },
+}, { _id: false });
+
+const MealTemplateFoodSchema = new Schema({
+  name: { type: String, required: true },
+  quantity: { type: Number, required: true },
+  unit: { type: String, required: true },
+  macros: { type: MacrosSchema, required: true },
+}, { _id: false });
+
+const MealTemplateSchema = new Schema({
+  id: { type: String, required: true },
+  name: { type: String, required: true },
+  foods: [MealTemplateFoodSchema],
+  createdAt: { type: String, required: true },
 }, { _id: false });
 
 const MacroGoalsSchema = new Schema({
@@ -73,11 +106,11 @@ const GoalConfigSchema = new Schema({
 const UserProfileSchema = new Schema({
   height: { type: Number, required: true, default: 183 },
   age: { type: Number, required: true, default: 27 },
-  gender: { 
-    type: String, 
-    enum: ['male', 'female'], 
+  gender: {
+    type: String,
+    enum: ['male', 'female'],
     required: true,
-    default: 'male' 
+    default: 'male'
   },
   activityLevel: {
     type: String,
@@ -99,20 +132,23 @@ const SettingsSchema = new Schema({
     dinner: Number,
     snack: Number,
   },
+  waterGoalMl: { type: Number, default: 2500 },
 }, { _id: false });
 
 // Main FitnessData schema
 const FitnessDataSchema = new Schema({
-  userId: { 
-    type: String, 
-    required: true, 
+  userId: {
+    type: String,
+    required: true,
     default: USER_ID,
-    index: true 
+    index: true
   },
   weightEntries: [WeightEntrySchema],
   foodEntries: [FoodEntrySchema],
   workoutEntries: [WorkoutEntrySchema],
   favoriteFoods: [FavoriteFoodSchema],
+  waterEntries: [WaterEntrySchema],
+  mealTemplates: [MealTemplateSchema],
   userProfile: { type: UserProfileSchema, required: true },
   settings: { type: SettingsSchema, default: {} },
   lastModified: { type: Date, default: Date.now, index: true },
@@ -133,11 +169,11 @@ export interface FitnessDataDocument extends Omit<FitnessData, 'userProfile' | '
   userProfile: UserProfile;
   settings: {
     defaultMealCalories?: Record<string, number>;
+    waterGoalMl?: number;
   };
 }
 
-const FitnessDataModel: Model<FitnessDataDocument> = 
+const FitnessDataModel: Model<FitnessDataDocument> =
   mongoose.models.FitnessData || mongoose.model<FitnessDataDocument>('FitnessData', FitnessDataSchema);
 
 export default FitnessDataModel;
-

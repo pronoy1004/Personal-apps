@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Fragment } from 'react';
 import { useFitness } from '@/hooks/useFitness';
 import { getDailyWorkouts, getWorkoutHistory } from '@/lib/utils/workout-analytics';
 import { format } from 'date-fns';
@@ -14,7 +14,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { Activity } from 'lucide-react';
+import { Activity, ChevronDown, ChevronUp } from 'lucide-react';
 
 ChartJS.register(
   CategoryScale,
@@ -28,6 +28,7 @@ ChartJS.register(
 export default function WorkoutHistory() {
   const { data } = useFitness();
   const [windowDays, setWindowDays] = useState<30 | 60 | 90>(30);
+  const [expandedDay, setExpandedDay] = useState<string | null>(null);
 
   const dailyWorkouts = useMemo(() => {
     if (!data) return [];
@@ -149,37 +150,67 @@ export default function WorkoutHistory() {
             </tr>
           </thead>
           <tbody>
-            {history.slice().reverse().map((day, index) => (
-              <tr 
-                key={index} 
-                className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-              >
-                <td className="py-2 px-3 text-gray-900 dark:text-gray-100">
-                  {format(new Date(day.date), 'MMM d, yyyy')}
-                </td>
-                <td className="py-2 px-3 text-right font-medium text-gray-900 dark:text-gray-100">
-                  {day.caloriesBurned} cal
-                </td>
-                <td className="py-2 px-3 text-right text-gray-600 dark:text-gray-400">
-                  {day.totalDuration > 0 ? `${day.totalDuration} min` : '-'}
-                </td>
-                <td className="py-2 px-3 text-right text-gray-600 dark:text-gray-400">
-                  {day.workoutCount}
-                </td>
-                <td className="py-2 px-3 text-gray-600 dark:text-gray-400">
-                  <div className="flex flex-wrap gap-1">
-                    {day.workouts.map((workout, idx) => (
-                      <span
-                        key={workout.id}
-                        className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded"
-                      >
-                        {workout.type}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {history.slice().reverse().map((day, index) => {
+              const isExpanded = expandedDay === day.date;
+              const hasExercises = day.workouts.some((w) => w.exercises && w.exercises.length > 0);
+              return (
+                <Fragment key={day.date}>
+                  <tr
+                    onClick={() => hasExercises && setExpandedDay(isExpanded ? null : day.date)}
+                    className={`border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/50 ${hasExercises ? 'cursor-pointer' : ''}`}
+                  >
+                    <td className="py-2 px-3 text-gray-900 dark:text-gray-100">
+                      <div className="flex items-center gap-1">
+                        {format(new Date(day.date), 'MMM d, yyyy')}
+                        {hasExercises && (
+                          isExpanded ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-2 px-3 text-right font-medium text-gray-900 dark:text-gray-100">
+                      {day.caloriesBurned} cal
+                    </td>
+                    <td className="py-2 px-3 text-right text-gray-600 dark:text-gray-400">
+                      {day.totalDuration > 0 ? `${day.totalDuration} min` : '-'}
+                    </td>
+                    <td className="py-2 px-3 text-right text-gray-600 dark:text-gray-400">
+                      {day.workoutCount}
+                    </td>
+                    <td className="py-2 px-3 text-gray-600 dark:text-gray-400">
+                      <div className="flex flex-wrap gap-1">
+                        {day.workouts.map((workout) => (
+                          <span
+                            key={workout.id}
+                            className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded"
+                          >
+                            {workout.type}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                  {isExpanded && day.workouts.map((workout) =>
+                    workout.exercises && workout.exercises.length > 0 ? (
+                      <tr key={`${workout.id}-exercises`} className="border-b border-gray-100 dark:border-gray-700/50 bg-gray-50 dark:bg-gray-700/30">
+                        <td colSpan={5} className="py-2 px-6">
+                          <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{workout.type} — Exercises</div>
+                          <div className="flex flex-wrap gap-2">
+                            {workout.exercises.map((ex, i) => (
+                              <span key={i} className="px-2 py-1 text-xs bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700 rounded">
+                                {ex.exerciseName}: {ex.sets}×{ex.reps}{ex.weightKg ? ` @ ${ex.weightKg}kg` : ''}
+                              </span>
+                            ))}
+                          </div>
+                          {workout.notes && (
+                            <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 italic">{workout.notes}</div>
+                          )}
+                        </td>
+                      </tr>
+                    ) : null
+                  )}
+                </Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>

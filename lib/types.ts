@@ -90,6 +90,35 @@ export interface Macros {
   protein: number; // grams
   carbs: number; // grams
   fat: number; // grams
+  fiber?: number; // grams
+  sugar?: number; // grams
+  sodium?: number; // mg
+}
+
+export interface WaterEntry {
+  id: string;
+  amount: number; // ml
+  timestamp: string;
+}
+
+export interface MealTemplate {
+  id: string;
+  name: string;
+  foods: Array<{
+    name: string;
+    quantity: number;
+    unit: string;
+    macros: Macros;
+  }>;
+  createdAt: string;
+}
+
+export interface ExerciseSet {
+  exerciseName: string;
+  sets: number;
+  reps: number;
+  weightKg?: number;
+  notes?: string;
 }
 
 export interface WeightEntry {
@@ -128,6 +157,8 @@ export interface WorkoutEntry {
   caloriesBurned: number;
   date: string; // ISO date string
   timestamp: string;
+  exercises?: ExerciseSet[]; // For strength training
+  notes?: string;
 }
 
 export type Gender = 'male' | 'female';
@@ -162,9 +193,12 @@ export interface FitnessData {
   foodEntries: FoodEntry[];
   workoutEntries: WorkoutEntry[];
   favoriteFoods: FavoriteFood[];
+  waterEntries: WaterEntry[];
+  mealTemplates: MealTemplate[];
   userProfile: UserProfile;
   settings: {
     defaultMealCalories?: Record<MealType, number>;
+    waterGoalMl?: number; // daily water goal in ml, default 2500
   };
 }
 

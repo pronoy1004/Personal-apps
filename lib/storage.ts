@@ -192,6 +192,8 @@ export function loadFitnessData(): FitnessData {
       foodEntries: [],
       workoutEntries: [],
       favoriteFoods: [],
+      waterEntries: [],
+      mealTemplates: [],
       userProfile: DEFAULT_USER_PROFILE,
       settings: {},
     };
@@ -210,6 +212,8 @@ export function loadFitnessData(): FitnessData {
     if (!data.foodEntries) data.foodEntries = [];
     if (!data.workoutEntries) data.workoutEntries = [];
     if (!data.favoriteFoods) data.favoriteFoods = [];
+    if (!data.waterEntries) data.waterEntries = [];
+    if (!data.mealTemplates) data.mealTemplates = [];
     if (!data.settings) data.settings = {};
     if (data.foodEntries && data.foodEntries.length > 0) {
       const favoriteEntries = data.foodEntries.filter((entry: any) => entry.isFavorite);
@@ -246,6 +250,8 @@ export function loadFitnessData(): FitnessData {
       foodEntries: [],
       workoutEntries: [],
       favoriteFoods: [],
+      waterEntries: [],
+      mealTemplates: [],
       userProfile: DEFAULT_USER_PROFILE,
       settings: {},
     };
@@ -264,6 +270,8 @@ export async function loadFitnessDataAsync(): Promise<FitnessData> {
       foodEntries: dbData.foodEntries || [],
       workoutEntries: dbData.workoutEntries || [],
       favoriteFoods: dbData.favoriteFoods || [],
+      waterEntries: (dbData as any).waterEntries || [],
+      mealTemplates: (dbData as any).mealTemplates || [],
       userProfile: dbData.userProfile || DEFAULT_USER_PROFILE,
       settings: dbData.settings || {},
     };

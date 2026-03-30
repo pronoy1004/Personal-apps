@@ -7,12 +7,15 @@ import { getStartOfDay, isSameDay } from '@/lib/utils/date';
 import WeightTracker from './WeightTracker';
 import FoodLogger from './FoodLogger';
 import WorkoutLogger from './WorkoutLogger';
+import WaterTracker from './WaterTracker';
+import MealTemplates from './MealTemplates';
 import DailySummary from './DailySummary';
 import WeightProjections from './WeightProjections';
 import FitnessSettings from './FitnessSettings';
 import IntakeMetrics from './IntakeMetrics';
 import IntakeHistory from './IntakeHistory';
 import WorkoutHistory from './WorkoutHistory';
+import WeeklyReport from './WeeklyReport';
 import FitnessChat from './FitnessChat';
 import AIInsights from './AIInsights';
 import { Calendar, Settings, TrendingUp, UtensilsCrossed, Activity, MessageCircle, Sparkles } from 'lucide-react';
@@ -266,7 +269,9 @@ export default function FitnessDashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
                 <div className="lg:col-span-2 space-y-4 md:space-y-6">
                   <WeightTracker />
+                  <WaterTracker />
                   <FoodLogger activeDragId={activeDragId} />
+                  <MealTemplates />
                   <WorkoutLogger />
                 </div>
                 <div className="lg:sticky lg:top-24 lg:self-start">
@@ -286,6 +291,7 @@ export default function FitnessDashboard() {
 
         {activeTab === 'history' && (
           <div className="space-y-6">
+            <WeeklyReport />
             <WeightTracker showHistory={true} />
             <IntakeMetrics />
             <IntakeHistory />
