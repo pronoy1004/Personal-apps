@@ -3,7 +3,6 @@
  * 
  * This script uses a simple approach - you can run it with Node.js
  * or use an online service to convert the SVG to PNG at 192x192 and 512x512
- * 
  * Alternative: Use https://realfavicongenerator.net/ or similar service
  */
 
