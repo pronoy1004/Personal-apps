@@ -156,7 +156,6 @@ export default function MediaCard({
           </div>
         )}
 
-        {/* Rating Actions */}
         {currentStatus === 'watched' && onRate && (
           <div className="flex items-center gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
             <button
