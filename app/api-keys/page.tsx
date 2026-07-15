@@ -8,7 +8,7 @@ import OnlineStatus from '@/components/ui/OnlineStatus';
 export default function ApiKeysPage() {
   return (
     <ApiKeysProvider>
-      <AppLayout>
+      <AppLayout narrow={false}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-8">
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">Secure Vault</p>

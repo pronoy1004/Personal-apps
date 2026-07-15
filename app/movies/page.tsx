@@ -192,7 +192,7 @@ function MoviesDashboard() {
 export default function MoviesPage() {
   return (
     <MoviesProvider>
-      <AppLayout>
+      <AppLayout narrow={false}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 space-y-8">
           <MoviesDashboard />
         </div>

@@ -55,26 +55,20 @@ export default function AIInsights() {
     if (!data) return undefined;
 
     const now = new Date();
-    let oldestDate: Date | null = null;
+    let oldestTime: number | null = null;
+    const consider = (t: number) => {
+      if (!Number.isNaN(t) && (oldestTime === null || t < oldestTime)) oldestTime = t;
+    };
 
     // Find oldest entry from all data types
-    if (data.foodEntries.length > 0) {
-      const oldestFood = new Date(Math.min(...data.foodEntries.map((e) => new Date(e.timestamp).getTime()) as number[]));
-      if (!oldestDate || oldestFood.getTime() < oldestDate.getTime()) oldestDate = oldestFood;
-    }
-    if (data.weightEntries.length > 0) {
-      const oldestWeight = new Date(Math.min(...data.weightEntries.map((e) => new Date(e.date).getTime()) as number[]));
-      if (!oldestDate || oldestWeight.getTime() < oldestDate.getTime()) oldestDate = oldestWeight;
-    }
-    if (data.workoutEntries.length > 0) {
-      const oldestWorkout = new Date(Math.min(...data.workoutEntries.map((e) => new Date(e.date).getTime()) as number[]));
-      if (!oldestDate || oldestWorkout.getTime() < oldestDate.getTime()) oldestDate = oldestWorkout;
-    }
+    data.foodEntries.forEach((e) => consider(new Date(e.timestamp).getTime()));
+    data.weightEntries.forEach((e) => consider(new Date(e.date).getTime()));
+    data.workoutEntries.forEach((e) => consider(new Date(e.date).getTime()));
 
-    if (!oldestDate) return undefined;
+    if (oldestTime === null) return undefined;
 
     // Calculate days between oldest and now
-    const days = Math.ceil((now.getTime() - oldestDate.getTime()) / (24 * 60 * 60 * 1000));
+    const days = Math.ceil((now.getTime() - oldestTime) / (24 * 60 * 60 * 1000));
     // Use minimum of available days and 30 for reasonable analysis
     return Math.min(Math.max(days, 1), 30);
   }, [data]);

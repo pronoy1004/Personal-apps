@@ -1,0 +1,130 @@
+// Pro-Fit data model.
+// Backed by the same MongoDB cluster as the rest of the hub (see MONGODB_URI /
+// lib/db/mongodb.ts) — Prisma connects to it directly via DATABASE_URL, in its
+// own set of collections alongside the mongoose-managed ones.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+/// Exercise catalog. Seeded from free-exercise-db plus any custom exercises
+/// discovered while importing Fitbod history.
+model Exercise {
+  id                String   @id @default(cuid()) @map("_id")
+  name              String   @unique
+  slug              String   @unique
+  /// JSON: string[] of alternate names used for import matching
+  aliases Json
+  /// JSON: string[] muscle keys (e.g. ["quadriceps"])
+  primaryMuscles Json
+  /// JSON: string[]
+  secondaryMuscles Json
+  equipment         String?  // barbell | dumbbell | machine | cable | body only | ...
+  mechanic          String?  // compound | isolation
+  force             String?  // push | pull | static
+  category          String?  // strength | cardio | stretching | ...
+  /// JSON: string[] step-by-step instructions
+  instructions Json
+  /// JSON: string[] image paths under /public/exercises
+  imageUrls Json
+  isCustom          Boolean  @default(false)
+  /// Smallest weight bump used by the progressive-overload engine (kg)
+  defaultIncrementKg Float   @default(2.5)
+  isCardio          Boolean  @default(false)
+
+  sets   WorkoutSet[]
+  score  ExerciseScore?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// A single workout session. Imported Fitbod sessions are grouped by their
+/// shared timestamp.
+model Workout {
+  id          String   @id @default(cuid()) @map("_id")
+  performedAt DateTime
+  finishedAt  DateTime?
+  note        String?
+  source      String   @default("manual") // manual | fitbod-import
+  createdAt   DateTime @default(now())
+
+  sets WorkoutSet[]
+
+  @@index([performedAt])
+}
+
+/// One logged set.
+model WorkoutSet {
+  id         String   @id @default(cuid()) @map("_id")
+  workout    Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  workoutId  String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+  exerciseId String
+  order      Int      @default(0)
+  reps       Int      @default(0)
+  weightKg   Float    @default(0)
+  /// Per-side / load multiplier (1, 2 for dumbbells per-side, 4, etc.)
+  multiplier Float    @default(1)
+  isWarmup   Boolean  @default(false)
+  durationS  Float?   // cardio
+  distanceM  Float?   // cardio
+  incline    Float?
+  resistance Float?
+  rpe        Float?
+  completed  Boolean  @default(true)
+
+  @@index([exerciseId])
+  @@index([workoutId])
+}
+
+/// Manual body metrics (replaces Apple Health on the web).
+model BodyMetric {
+  id          String   @id @default(cuid()) @map("_id")
+  measuredAt  DateTime
+  weightKg    Float?
+  bodyFatPct  Float?
+  /// JSON: { chest, waist, arms, ... } in cm
+  measurements Json
+  photoUrl    String?
+  note        String?
+  createdAt   DateTime @default(now())
+
+  @@index([measuredAt])
+}
+
+/// Cached scoring output per exercise, recomputed after imports / new workouts.
+model ExerciseScore {
+  id                String   @id @default(cuid()) @map("_id")
+  exercise          Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  exerciseId        String   @unique
+  progressionScore  Float    @default(0)
+  preferenceScore   Float    @default(0)
+  effectivenessScore Float   @default(0)
+  compositeScore    Float    @default(0)
+  bestE1rmKg        Float    @default(0)
+  totalSets         Int      @default(0)
+  lastPerformedAt   DateTime?
+  /// JSON: arbitrary breakdown used by the tuning UI
+  details Json
+  updatedAt         DateTime @updatedAt
+}
+
+/// Single-row app settings.
+model Setting {
+  id               Int    @id @default(1) @map("_id")
+  units            String @default("kg") // kg | lb
+  /// JSON: string[] of equipment the user has access to (empty = all)
+  availableEquipment Json
+  goal             String @default("hypertrophy") // strength | hypertrophy | endurance
+  /// JSON: { defaultRestSec, warmupRestSec }
+  restTimer Json
+  /// JSON: { progression, preference, effectiveness } weights summing to 1
+  scoringWeights Json
+  updatedAt        DateTime @updatedAt
+}
