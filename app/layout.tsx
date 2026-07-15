@@ -1,10 +1,28 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Personal Hub",
-  description: "Personal Hub - Your all-in-one personal management platform for tasks, fitness, movies, and more",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
+  description:
+    "Personal Hub — one place for fitness, tasks, movies, keys, stats, and more.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/logo.svg",
+    apple: "/icon-192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Personal Hub",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#07080a",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -13,55 +31,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
-        <meta name="theme-color" content="#3b82f6" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Personal Hub" />
-        <script
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function(){
-                try {
-                  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
-                  var stored = localStorage.getItem('kanban-data');
-                  var theme = 'light';
-                  if (stored) {
-                    try {
-                      var data = JSON.parse(stored);
-                      if (data.settings && data.settings.theme) {
-                        if (data.settings.theme === 'system' && window.matchMedia) {
-                          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                        } else {
-                          theme = data.settings.theme === 'dark' ? 'dark' : 'light';
-                        }
-                      }
-                    } catch(e) {}
-                  }
-                  if (!stored || theme === 'light' || theme === 'system') {
-                    if (window.matchMedia) {
-                      theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                    }
-                  }
-                  if (typeof document !== 'undefined') {
-                    document.documentElement.classList[theme === 'dark' ? 'add' : 'remove']('dark');
-                  }
-                } catch(e) {
-                  try {
-                    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                      document.documentElement.classList.add('dark');
-                    }
-                  } catch(err) {}
-                }
-              })();
-            `,
-          }}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap"
+          rel="stylesheet"
         />
       </head>
       <body suppressHydrationWarning>{children}</body>

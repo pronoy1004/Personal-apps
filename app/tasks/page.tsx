@@ -65,7 +65,7 @@ export default function TasksPage() {
 
   if (!data) {
     return (
-      <AppLayout>
+      <AppLayout narrow={false}>
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -80,7 +80,7 @@ export default function TasksPage() {
   const availableTags = Array.from(new Set(data.tasks.flatMap((t) => t.tags)));
 
   return (
-    <AppLayout>
+    <AppLayout narrow={false}>
       <div className="h-screen flex flex-col max-w-[1920px] mx-auto w-full">
         {/* Header */}
         <Header

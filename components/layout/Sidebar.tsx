@@ -1,134 +1,76 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getNavigationItems } from '@/lib/config/navigation';
-import { Menu, X } from 'lucide-react';
+import { getPrimaryItems, getSecondaryItems } from '@/lib/config/navigation';
+import { cn } from '@/lib/cn';
 
+/**
+ * Desktop sidebar (lg+). Mobile uses the BottomNav instead.
+ * Renders the dark matte-black chrome with all primary + secondary apps.
+ */
 export default function Sidebar() {
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const pathname = usePathname();
-  const navItems = getNavigationItems();
+  const pathname = usePathname() || '/';
+  const primary = getPrimaryItems();
+  const secondary = getSecondaryItems();
 
-  // Close mobile menu when route changes
-  useEffect(() => {
-    setIsMobileOpen(false);
-  }, [pathname]);
+  const isActive = (route: string, exact?: boolean) =>
+    exact ? pathname === route : pathname === route || pathname.startsWith(route + '/');
 
-  // Close mobile menu on escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsMobileOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, []);
-
-  const isActive = (route: string) => {
-    if (route === '/fitness') {
-      return pathname === '/fitness';
-    }
-    return pathname?.startsWith(route);
+  const renderItem = (item: ReturnType<typeof getPrimaryItems>[number]) => {
+    const Icon = item.icon;
+    const active = isActive(item.route, item.exact);
+    return (
+      <Link
+        key={item.id}
+        href={item.route}
+        title={item.description || item.label}
+        className={cn(
+          'relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm transition-colors',
+          active
+            ? 'bg-accent/[0.10] font-semibold text-accent'
+            : 'text-muted hover:bg-surface-2 hover:text-foreground',
+        )}
+      >
+        <Icon size={19} strokeWidth={active ? 2.3 : 2} />
+        <span>{item.label}</span>
+        {item.badge && (
+          <span className="ml-auto rounded-full bg-accent/[0.13] px-2 py-0.5 text-[11px] font-medium text-accent">
+            {item.badge}
+          </span>
+        )}
+        {active && (
+          <span className="absolute right-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-l-full bg-accent" />
+        )}
+      </Link>
+    );
   };
 
   return (
-    <>
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        aria-label="Toggle menu"
-      >
-        {isMobileOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
+    <aside className="sticky top-0 hidden h-screen w-64 flex-col border-r border-border bg-surface lg:flex">
+      {/* Brand */}
+      <div className="border-b border-border p-4">
+        <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
+          <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-accent shadow-glow">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#06121A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1.6" />
+              <rect x="14" y="3" width="7" height="7" rx="1.6" />
+              <rect x="3" y="14" width="7" height="7" rx="1.6" />
+              <rect x="14" y="14" width="7" height="7" rx="1.6" />
+            </svg>
+          </span>
+          <h1 className="text-lg font-extrabold tracking-tight text-foreground">Personal Hub</h1>
+        </Link>
+      </div>
 
-      {/* Mobile overlay */}
-      {isMobileOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
-          onClick={() => setIsMobileOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={`
-          fixed lg:sticky top-0 left-0 h-screen z-40
-          bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
-          w-64 flex flex-col
-          transform transition-transform duration-300 ease-in-out
-          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}
-      >
-        {/* Logo/Brand */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-          <Link
-            href="/fitness"
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-            onClick={() => setIsMobileOpen(false)}
-          >
-            <img
-              src="/logo.svg"
-              alt="Personal Hub Logo"
-              className="w-10 h-10 flex-shrink-0"
-              width="40"
-              height="40"
-            />
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-              Personal Hub
-            </h1>
-          </Link>
+      {/* Nav */}
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+        {primary.map(renderItem)}
+        <div className="px-3.5 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+          More
         </div>
-
-        {/* Navigation Items */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.route);
-            
-            return (
-              <Link
-                key={item.id}
-                href={item.route}
-                onClick={() => setIsMobileOpen(false)}
-                className={`
-                  flex items-center gap-3 px-4 py-3 rounded-lg
-                  transition-colors relative
-                  ${
-                    active
-                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                  }
-                `}
-                title={item.description || item.label}
-              >
-                <Icon
-                  size={20}
-                  className={active ? 'text-blue-600 dark:text-blue-400' : ''}
-                />
-                <span>{item.label}</span>
-                {item.badge && (
-                  <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full">
-                    {item.badge}
-                  </span>
-                )}
-                {active && (
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-600 dark:bg-blue-400 rounded-l-full" />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Footer/Bottom section - can be used for user info, settings, etc. */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-          {/* Future: Add user profile, settings link, etc. */}
-        </div>
-      </aside>
-    </>
+        {secondary.map(renderItem)}
+      </nav>
+    </aside>
   );
 }
-

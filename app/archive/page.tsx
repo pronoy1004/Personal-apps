@@ -16,7 +16,7 @@ export default function ArchivePage() {
 
   if (!data) {
     return (
-      <AppLayout>
+      <AppLayout narrow={false}>
         <div className="flex items-center justify-center h-screen">
           <div className="text-gray-500 dark:text-gray-400">Loading...</div>
         </div>
@@ -37,7 +37,7 @@ export default function ArchivePage() {
   };
 
   return (
-    <AppLayout>
+    <AppLayout narrow={false}>
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">

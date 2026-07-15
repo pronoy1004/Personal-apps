@@ -1,19 +1,30 @@
 'use client';
 
 import Sidebar from './Sidebar';
+import BottomNav from './BottomNav';
 
 interface AppLayoutProps {
   children: React.ReactNode;
+  /** Constrain content to a phone-like column (default). Set false for wide boards. */
+  narrow?: boolean;
 }
 
-export default function AppLayout({ children }: AppLayoutProps) {
+export default function AppLayout({ children, narrow = true }: AppLayoutProps) {
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+    <div className="flex h-screen min-h-0 bg-background text-foreground">
       <Sidebar />
-      <main className="flex-1 lg:ml-0 overflow-auto">
-        {children}
+      <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
+        <div
+          className={
+            narrow
+              ? 'mx-auto w-full max-w-lg px-4 pb-28 pt-safe lg:pb-8'
+              : 'w-full px-4 pb-28 pt-safe lg:pb-8'
+          }
+        >
+          {children}
+        </div>
       </main>
+      <BottomNav />
     </div>
   );
 }
-
